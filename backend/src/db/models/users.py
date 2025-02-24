@@ -5,6 +5,7 @@ from sqlalchemy import String, DateTime, func, Float, CheckConstraint
 from sqlalchemy.orm import mapped_column, Mapped
 
 from db.session.base import Base
+from schemas.users import UserOut
 
 
 class User(Base):
@@ -14,7 +15,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(25), index=True, unique=True)
     email: Mapped[EmailStr] = mapped_column(String(100), index=True, unique=True)
     password: Mapped[str] = mapped_column(String(100))
-    balance: Mapped[float] = mapped_column(Float(precision=4), CheckConstraint('balance >= 0'))
+    balance: Mapped[float] = mapped_column(Float(precision=4), CheckConstraint('balance >= 0'), default=0)
 
     is_superuser: Mapped[bool] = mapped_column(default=False)
     is_active: Mapped[bool] = mapped_column(default=True)
@@ -26,3 +27,19 @@ class User(Base):
         server_default=func.now(),
         onupdate=func.now()
     )
+
+    def to_read_model(self) -> UserOut:
+        return UserOut(
+            id=self.id,
+
+            username=self.username,
+            email=self.email,
+            balance=self.balance,
+
+            is_superuser=self.is_superuser,
+            is_active=self.is_active,
+            is_verified=self.is_verified,
+
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+        )

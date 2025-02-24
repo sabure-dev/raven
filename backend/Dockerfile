@@ -11,7 +11,4 @@ RUN poetry config virtualenvs.create false \
 
 COPY . .
 
-RUN adduser --disabled-password --gecos '' appuser
-USER appuser
-
 CMD docker/app.sh
