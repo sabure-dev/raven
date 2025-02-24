@@ -30,6 +30,10 @@ class AbstractRepository(ABC):
     async def find_one_by_field(self, field: str, value: any) -> Optional[ModelType]:
         raise NotImplementedError
 
+    @abstractmethod
+    async def update_one(self, item: ModelType, data: dict) -> ModelType:
+        raise NotImplementedError
+
 
 class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
     def __init__(self, model: Type[ModelType], session: AsyncSession):
@@ -64,3 +68,10 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         query = select(self._model).where(getattr(self._model, field) == value)
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
+
+    async def update_one(self, item: ModelType, data: dict) -> ModelType:
+        for key, value in data.items():
+            setattr(item, key, value)
+        await self._session.commit()
+        await self._session.refresh(item)
+        return item
