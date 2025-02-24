@@ -1,10 +1,11 @@
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, Body, status, Path
+from fastapi import APIRouter, Depends, Body, status, Path, HTTPException
 
 from api.v1.dependencies import get_user_service
 from schemas.users import UserOut, UserCreate
 from services.users import UserService
+from core.exceptions import UserNotFoundException, UserAlreadyExistsException
 
 router = APIRouter(
     prefix="/users",
@@ -25,8 +26,14 @@ async def get_user_by_id(
         user_service: Annotated[UserService, Depends(get_user_service)],
         user_id: Annotated[int, Path(title="ID of the user to get")],
 ):
-    user = await user_service.get_user_by_id(user_id)
-    return user
+    try:
+        user = await user_service.get_user_by_id(user_id)
+        return user
+    except UserNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
 
 
 @router.post("", response_model=dict[str, int], status_code=status.HTTP_201_CREATED)
@@ -34,8 +41,14 @@ async def create_user(
         user_service: Annotated[UserService, Depends(get_user_service)],
         user_to_create: Annotated[UserCreate, Body(title="User to create")],
 ):
-    user_id = await user_service.create_user(user_to_create)
-    return {"user_id": user_id}
+    try:
+        user_id = await user_service.create_user(user_to_create)
+        return {"user_id": user_id}
+    except UserAlreadyExistsException as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -43,5 +56,10 @@ async def delete_user(
         user_service: Annotated[UserService, Depends(get_user_service)],
         user_id: Annotated[int, Path(title="ID of the user to delete")],
 ):
-    await user_service.delete_user(user_id)
-    return
+    try:
+        await user_service.delete_user(user_id)
+    except UserNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, Type, Optional, List, Sequence
+from typing import TypeVar, Generic, Type, Optional, Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,7 +23,11 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete_one(self, item_id: int) -> None:
+    async def delete_one(self, item: ModelType) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def find_one_by_field(self, field: str, value: any) -> Optional[ModelType]:
         raise NotImplementedError
 
 
@@ -52,8 +56,11 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         result = await self._session.execute(query)
         return result.scalars().all()
 
-    async def delete_one(self, item_id: int) -> None:
-        instance = await self.find_one_by_id(item_id)
-        if instance:
-            await self._session.delete(instance)
-            await self._session.commit()
+    async def delete_one(self, item: ModelType) -> None:
+        await self._session.delete(item)
+        await self._session.commit()
+
+    async def find_one_by_field(self, field: str, value: any) -> Optional[ModelType]:
+        query = select(self._model).where(getattr(self._model, field) == value)
+        result = await self._session.execute(query)
+        return result.scalar_one_or_none()
