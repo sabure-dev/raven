@@ -2,7 +2,8 @@ from typing import Callable
 
 from fastapi import BackgroundTasks
 
-from core.exceptions import UserAlreadyExistsException, UserNotFoundException
+from core.exceptions import UserAlreadyExistsException, UserNotFoundException, UserAlreadyVerifiedException
+from core.utils.password import get_password_hash
 from core.utils.repository import AbstractRepository
 from core.utils.email import send_verification_email
 from core.utils.token import create_verification_token, verify_token
@@ -21,8 +22,8 @@ class UserService:
         existing_user = await self.user_repo.find_one_by_field('username', user.username)
         if existing_user:
             raise UserAlreadyExistsException('username', user.username)
-
         user_dict = user.model_dump()
+        user_dict["password"] = get_password_hash(user_dict["password"])
         user_id = await self.user_repo.create_one(user_dict)
 
         token = create_verification_token(user.email)
@@ -36,9 +37,10 @@ class UserService:
             user = await self.user_repo.find_one_by_field('email', email)
             if not user:
                 raise UserNotFoundException('email', email)
-            
+            if user.is_verified:
+                raise UserAlreadyVerifiedException(str(user.id))
             await self.user_repo.update_one(user, {"is_verified": True})
-        except ValueError as e:
+        except ValueError:
             raise ValueError("Invalid verification token")
 
     async def get_user_by_id(self, user_id: int) -> UserOut:

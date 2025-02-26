@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, UTC
 
-from jose import jwt
+import jwt
 
 from core.config.config import settings
 
@@ -21,5 +21,5 @@ def verify_token(token: str) -> str:
         if email is None:
             raise ValueError("Invalid token")
         return email
-    except jwt.JWTError:
+    except jwt.InvalidTokenError:
         raise ValueError("Invalid token")

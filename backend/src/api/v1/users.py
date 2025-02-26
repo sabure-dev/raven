@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Body, status, Path, HTTPException, Backg
 from api.v1.dependencies import get_user_service
 from schemas.users import UserOut, UserCreate
 from services.users import UserService
-from core.exceptions import UserNotFoundException, UserAlreadyExistsException
+from core.exceptions import UserNotFoundException, UserAlreadyExistsException, UserAlreadyVerifiedException
 
 router = APIRouter(
     prefix="/users",
@@ -74,7 +74,7 @@ async def verify_email(
     try:
         await user_service.verify_email(token)
         return {"message": "Email successfully verified"}
-    except (ValueError, UserNotFoundException) as e:
+    except (ValueError, UserNotFoundException, UserAlreadyVerifiedException) as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
