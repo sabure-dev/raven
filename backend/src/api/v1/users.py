@@ -1,6 +1,7 @@
 from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, Body, status, Path, HTTPException, BackgroundTasks
+from pydantic import EmailStr
 
 from api.v1.dependencies import get_user_service
 from schemas.users import UserOut, UserCreate
@@ -74,7 +75,34 @@ async def verify_email(
     try:
         await user_service.verify_email(token)
         return {"message": "Email successfully verified"}
-    except (ValueError, UserNotFoundException, UserAlreadyVerifiedException) as e:
+    except UserNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except (ValueError, UserAlreadyVerifiedException) as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.put("/{user_id}/update_email", status_code=status.HTTP_200_OK, response_model=dict[str, UserOut])
+async def update_user_email(
+        user_service: Annotated[UserService, Depends(get_user_service)],
+        background_tasks: BackgroundTasks,
+        user_id: Annotated[int, Path(title="ID of the user to update")],
+        new_email: Annotated[EmailStr, Body(title="New email to update")],
+):
+    try:
+        user = await user_service.update_user_email(user_id, new_email, background_tasks)
+        return {"updated_user": user}
+    except UserNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except (ValueError, UserAlreadyExistsException) as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)

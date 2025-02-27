@@ -59,14 +59,18 @@ class UserService:
             raise UserNotFoundException('id', str(user_id))
         await self.user_repo.delete_one(user)
 
-    async def get_user_by_email(self, email: str) -> UserOut:
-        user = await self.user_repo.find_one_by_field('email', email)
-        if not user:
-            raise UserNotFoundException('email', email)
-        return user.to_read_model()
+    async def update_user_email(self, user_id: int, new_email: str, background_tasks: BackgroundTasks) -> UserOut:
+        existing_user = await self.user_repo.find_one_by_field('email', new_email)
+        if existing_user:
+            raise UserAlreadyExistsException('email', new_email)
 
-    async def get_user_by_username(self, username: str) -> UserOut:
-        user = await self.user_repo.find_one_by_field('username', username)
+        user = await self.user_repo.find_one_by_id(user_id)
         if not user:
-            raise UserNotFoundException('username', username)
-        return user.to_read_model()
+            raise UserNotFoundException('id', str(user_id))
+
+        updated_user = await self.user_repo.update_one(user, {"email": new_email, "is_verified": False})
+
+        token = create_verification_token(user.email)
+        background_tasks.add_task(send_verification_email, user.email, token)
+
+        return updated_user.to_read_model()
