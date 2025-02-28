@@ -17,10 +17,12 @@ class TokenService:
 
     def create_tokens(self, user: User) -> TokenResponse:
         access_token = self._create_token(
+            "username",
             user,
             timedelta(minutes=settings.auth_jwt.access_token_expire_minutes)
         )
         refresh_token = self._create_token(
+            "username",
             user,
             timedelta(days=settings.auth_jwt.refresh_token_expire_days)
         )
@@ -28,6 +30,14 @@ class TokenService:
             access_token=access_token,
             refresh_token=refresh_token
         )
+
+    def create_verification_token(self, user: User) -> str:
+        verification_token = self._create_token(
+            "username",
+            user,
+            timedelta(days=settings.auth_jwt.verification_token_expire_minutes)
+        )
+        return verification_token
 
     def verify_token(self, token: str) -> dict:
         try:
@@ -41,11 +51,11 @@ class TokenService:
         except jwt.InvalidTokenError:
             raise InvalidCredentialsException()
 
-    def _create_token(self, user: User, expires_delta: timedelta) -> str:
+    def _create_token(self, sub_type: str, user: User, expires_delta: timedelta) -> str:
         expire = datetime.now(UTC) + expires_delta
         to_encode = {
             "exp": expire,
-            "sub": user.username,
+            "sub": getattr(user, sub_type),
         }
         return jwt.encode(
             to_encode,
