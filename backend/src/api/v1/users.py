@@ -108,6 +108,41 @@ async def update_user_email(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+    except UnverifiedEmailException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f'Internal server error: {e}'
+        )
+
+
+@router.put("/{user_id}/update_username", status_code=status.HTTP_200_OK, response_model=dict[str, UserOut])
+async def update_user_username(
+        user_service: Annotated[UserService, Depends(get_user_service)],
+        user_id: Annotated[int, Path(title="ID of the user to update")],
+        new_username: Annotated[str, Body(title="New username to update")],
+):
+    try:
+        user = await user_service.update_user_username(user_id, new_username)
+        return {"updated_user": user}
+    except UserNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except UserAlreadyExistsException as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except UnverifiedEmailException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f'Internal server error: {e}'
+        )
 
 
 @router.post("/password-forgot", status_code=status.HTTP_200_OK)
@@ -151,4 +186,11 @@ async def reset_password(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
+        )
+    except UnverifiedEmailException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f'Internal server error: {e}'
         )

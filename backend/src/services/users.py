@@ -72,11 +72,28 @@ class UserService:
         user = await self.user_repo.find_one_by_id(user_id)
         if not user:
             raise UserNotFoundException('id', str(user_id))
+        if not user.is_verified:
+            raise UnverifiedEmailException()
 
         updated_user = await self.user_repo.update_one(user, {"email": new_email, "is_verified": False})
 
         token = self.token_service.create_verification_token(user)
         background_tasks.add_task(self.email_service.send_verification_email, user.email, token)
+
+        return updated_user.to_read_model()
+
+    async def update_user_username(self, user_id: int, new_username: str) -> UserOut:
+        existing_user = await self.user_repo.find_one_by_field('username', new_username)
+        if existing_user:
+            raise UserAlreadyExistsException('username', new_username)
+
+        user = await self.user_repo.find_one_by_id(user_id)
+        if not user:
+            raise UserNotFoundException('id', str(user_id))
+        if not user.is_verified:
+            raise UnverifiedEmailException()
+
+        updated_user = await self.user_repo.update_one(user, {"username": new_username})
 
         return updated_user.to_read_model()
 
@@ -96,6 +113,8 @@ class UserService:
             user = await self.user_repo.find_one_by_field('username', payload["sub"])
             if not user:
                 raise UserNotFoundException('username', payload["sub"])
+            if not user.is_verified:
+                raise UnverifiedEmailException()
 
             new_hashed_password = get_password_hash(new_password)
             await self.user_repo.update_one(user, {"password": new_hashed_password})
