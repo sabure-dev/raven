@@ -2,10 +2,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from api.v1.dependencies import get_auth_service
+from api.v1.dependencies import get_authenticate_user_use_case, get_refresh_token_use_case
 from core.exceptions import AuthException
 from schemas.auth import TokenResponse, LoginRequest, RefreshTokenRequest
-from services.auth import AuthService
+from use_cases.auth import AuthenticateUserUseCase, RefreshTokenUseCase
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -13,10 +13,10 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 @router.post("/login", response_model=TokenResponse)
 async def login(
         credentials: LoginRequest,
-        auth_service: Annotated[AuthService, Depends(get_auth_service)]
+        authenticate_user_use_case: Annotated[AuthenticateUserUseCase, Depends(get_authenticate_user_use_case)]
 ):
     try:
-        return await auth_service.authenticate_user(credentials)
+        return await authenticate_user_use_case.execute(credentials)
     except AuthException as e:
         raise e
     except Exception as e:
@@ -26,10 +26,10 @@ async def login(
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(
         request: RefreshTokenRequest,
-        auth_service: Annotated[AuthService, Depends(get_auth_service)]
+        refresh_token_use_case: Annotated[RefreshTokenUseCase, Depends(get_refresh_token_use_case)]
 ):
     try:
-        return await auth_service.refresh_token(request.refresh_token)
+        return await refresh_token_use_case.execute(request)
     except AuthException as e:
         raise e
     except Exception as e:
