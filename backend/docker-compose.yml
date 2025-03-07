@@ -9,9 +9,13 @@ services:
     env_file:
       - .env
     depends_on:
-      - raven_db
+      raven_db:
+        condition: service_healthy
     networks:
       - raven_network
+    volumes:
+      - ./src:/app/src
+      - ./certs:/app/certs
 
   raven_db:
     image: postgres:17
@@ -26,6 +30,11 @@ services:
       - raven_network
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 networks:
   raven_network:

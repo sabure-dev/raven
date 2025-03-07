@@ -35,7 +35,7 @@ class TokenService:
         verification_token = self._create_token(
             "username",
             user,
-            timedelta(days=settings.auth_jwt.verification_token_expire_minutes)
+            timedelta(minutes=settings.auth_jwt.verification_token_expire_minutes)
         )
         return verification_token
 
