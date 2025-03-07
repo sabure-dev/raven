@@ -9,9 +9,13 @@ from services.jwt import TokenService
 
 
 class AuthService:
-    def __init__(self, user_repo_factory: Callable[[], AbstractRepository]):
+    def __init__(
+        self,
+        user_repo_factory: Callable[[], AbstractRepository],
+        token_service_factory: Callable[[], TokenService]
+    ):
         self.user_repo = user_repo_factory()
-        self.token_service = TokenService()
+        self.token_service = token_service_factory()
 
     async def authenticate_user(self, credentials: LoginRequest) -> TokenResponse:
         user = await self.user_repo.find_one_by_field("username", credentials.username)
