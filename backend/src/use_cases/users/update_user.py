@@ -41,7 +41,9 @@ class UpdateUserUsernameUseCase(BaseUseCase[UpdateUserUsernameInput, UserOut]):
         self.user_service = user_service_factory()
 
     async def execute(self, input_data: UpdateUserUsernameInput) -> UserOut:
-        return await self.user_service.update_user_username(
+        updated_user = await self.user_service.update_user_username(
             input_data.user_id,
             input_data.new_username
         )
+
+        return updated_user.to_read_model()

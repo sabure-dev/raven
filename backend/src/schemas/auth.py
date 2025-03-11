@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class LoginRequest(BaseModel):
@@ -9,7 +9,8 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
-    token_type: str = "Bearer"
+    token_type: str = "bearer"
+    expires_in: int = Field(3600, description="Срок действия токена в секундах")
 
 
 class RefreshTokenRequest(BaseModel):

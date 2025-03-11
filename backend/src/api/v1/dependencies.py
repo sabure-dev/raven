@@ -6,6 +6,7 @@ from repositories.users import UserRepository
 from services.auth import AuthService
 from services.email import EmailService
 from services.jwt import TokenService
+from services.security import SecurityService
 from services.users import UserService
 from use_cases.auth import AuthenticateUserUseCase, RefreshTokenUseCase
 from use_cases.users import (
@@ -37,6 +38,13 @@ def get_email_service_factory():
     return lambda: EmailService()
 
 
+def get_security_service(
+    user_repo_factory=Depends(get_user_repo_factory),
+    token_service_factory=Depends(get_token_service_factory)
+) -> SecurityService:
+    return SecurityService(user_repo_factory, token_service_factory)
+
+
 def get_auth_service_factory(
     user_repo_factory=Depends(get_user_repo_factory),
     token_service_factory=Depends(get_token_service_factory)
@@ -66,7 +74,7 @@ def get_get_user_use_case(
 
 
 def get_get_users_use_case(
-    user_service_factory=Depends(get_user_service_factory)
+    user_service_factory=Depends(get_user_service_factory),
 ) -> GetUsersUseCase:
     return GetUsersUseCase(user_service_factory)
 
@@ -116,3 +124,7 @@ def get_refresh_token_use_case(
     auth_service_factory=Depends(get_auth_service_factory)
 ) -> RefreshTokenUseCase:
     return RefreshTokenUseCase(auth_service_factory)
+
+
+def get_user_service(session: AsyncSession = Depends(get_async_session)) -> UserService:
+    return UserService(lambda: UserRepository(session))

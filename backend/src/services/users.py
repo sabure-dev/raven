@@ -2,12 +2,12 @@ from typing import Callable, Optional, List
 
 from pydantic import EmailStr
 
-from core.exceptions import UserAlreadyExistsException, UserNotFoundException, UserAlreadyVerifiedException, \
-    UnverifiedEmailException
-from core.utils.password import get_password_hash
+from core.exceptions import ItemAlreadyExistsException, ItemNotFoundException, UserAlreadyVerifiedException, \
+    InvalidCredentialsException
+from core.utils.password import get_password_hash, verify_password
 from core.utils.repository import AbstractRepository
 from db.models.users import User
-from schemas.users import UserOut, UserCreate
+from schemas.users import UserCreate
 
 
 class UserService:
@@ -17,11 +17,11 @@ class UserService:
     async def create_user(self, user: UserCreate) -> (int, User):
         existing_user = await self.user_repo.find_one_by_field('email', user.email)
         if existing_user:
-            raise UserAlreadyExistsException('email', user.email)
+            raise ItemAlreadyExistsException('User', 'email', user.email)
 
         existing_user = await self.user_repo.find_one_by_field('username', user.username)
         if existing_user:
-            raise UserAlreadyExistsException('username', user.username)
+            raise ItemAlreadyExistsException('User', 'username', user.username)
 
         user_dict = user.model_dump()
         user_dict["password"] = get_password_hash(user_dict["password"])
@@ -32,10 +32,16 @@ class UserService:
 
         return user_id, created_user
 
+    async def get_user_by_email(self, email: EmailStr) -> User:
+        user = await self.user_repo.find_one_by_field('email', email)
+        if not user:
+            raise ItemNotFoundException('User', 'email', email)
+        return user
+
     async def get_user_by_username(self, username: str) -> User:
         user = await self.user_repo.find_one_by_field('username', username)
         if not user:
-            raise UserNotFoundException('username', username)
+            raise ItemNotFoundException('User', 'username', username)
         return user
 
     async def update_user_verification(self, user: User, is_verified: bool) -> User:
@@ -44,55 +50,45 @@ class UserService:
 
         return await self.user_repo.update_one(user, {'is_verified': is_verified})
 
-    async def get_user_by_id(self, user_id: int) -> Optional[UserOut]:
+    async def get_user_by_id(self, user_id: int) -> Optional[User]:
         user = await self.user_repo.find_one_by_id(user_id)
         if not user:
-            raise UserNotFoundException("id", str(user_id))
-        return user.to_read_model()
+            raise ItemNotFoundException('User', "id", str(user_id))
+        return user
 
-    async def get_users(self) -> List[UserOut]:
-        users = await self.user_repo.find_all()
-        return [user.to_read_model() for user in users]
+    async def get_users(self) -> List[User]:
+        return await self.user_repo.find_all()
 
     async def delete_user(self, user_id: int) -> None:
-        user = await self.user_repo.find_one_by_id(user_id)
-        if not user:
-            raise UserNotFoundException("id", str(user_id))
+        user = await self.get_user_by_id(user_id)
         await self.user_repo.delete_one(user)
 
     async def update_user_email(self, user_id: int, new_email: EmailStr) -> User:
-        user = await self.user_repo.find_one_by_id(user_id)
-        if not user:
-            raise UserNotFoundException("id", str(user_id))
+        user = await self.get_user_by_id(user_id)
 
         existing_user = await self.user_repo.find_one_by_field('email', new_email)
-        if existing_user:
-            raise UserAlreadyExistsException('email', new_email)
+        if existing_user and existing_user.id != user_id:
+            raise ItemAlreadyExistsException('User', 'email', new_email)
 
         return await self.user_repo.update_one(user, {'email': new_email, 'is_verified': False})
 
-    async def update_user_username(self, user_id: int, new_username: str) -> UserOut:
-        user = await self.user_repo.find_one_by_id(user_id)
-        if not user:
-            raise UserNotFoundException("id", str(user_id))
-
-        if not user.is_verified:
-            raise UnverifiedEmailException()
+    async def update_user_username(self, user_id: int, new_username: str) -> User:
+        user = await self.get_user_by_id(user_id)
 
         existing_user = await self.user_repo.find_one_by_field('username', new_username)
-        if existing_user:
-            raise UserAlreadyExistsException('username', new_username)
+        if existing_user and existing_user.id != user_id:
+            raise ItemAlreadyExistsException('User', 'username', new_username)
 
-        updated_user = await self.user_repo.update_one(user, {'username': new_username})
-
-        return updated_user.to_read_model()
-
-    async def get_user_by_email(self, email: EmailStr) -> User:
-        user = await self.user_repo.find_one_by_field('email', email)
-        if not user:
-            raise UserNotFoundException('email', email)
-        return user
+        return await self.user_repo.update_one(user, {'username': new_username})
 
     async def update_user_password(self, user: User, new_password: str) -> User:
         hashed_password = get_password_hash(new_password)
         return await self.user_repo.update_one(user, {'password': hashed_password})
+
+    async def change_password(self, user_id: int, current_password: str, new_password: str) -> None:
+        user = await self.get_user_by_id(user_id)
+
+        if not verify_password(current_password, user.password):
+            raise InvalidCredentialsException()
+
+        await self.update_user_password(user, new_password)
