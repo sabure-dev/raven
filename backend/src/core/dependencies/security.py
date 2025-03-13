@@ -1,6 +1,6 @@
 from fastapi import Depends
 
-from api.v1.dependencies import get_security_service
+from core.dependencies.services import get_security_service
 from db.models.users import User
 from services.security import SecurityService
 

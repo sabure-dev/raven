@@ -3,18 +3,16 @@ from typing import List, Optional, Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, Path, Body, BackgroundTasks
 from pydantic import EmailStr
 
-from api.v1.dependencies import (
+from core.dependencies import (
     get_get_user_use_case, get_get_users_use_case, get_create_user_use_case,
     get_verify_email_use_case, get_delete_user_use_case, get_update_user_email_use_case,
     get_update_user_username_use_case, get_request_password_reset_use_case,
-    get_update_password_use_case, get_user_service
+    get_update_password_use_case, get_user_service,
+    get_current_active_verified_user, get_current_superuser
 )
 from core.exceptions import (
     ItemNotFoundException, ItemAlreadyExistsException, UnverifiedEmailException,
     InvalidCredentialsException, UserAlreadyVerifiedException
-)
-from core.security.dependencies import (
-    get_current_active_verified_user, get_current_superuser
 )
 from db.models.users import User
 from schemas.users import UserOut, UserCreate, ChangePasswordRequest
@@ -179,7 +177,7 @@ async def update_user_email(
 
 @router.patch("/me/username", response_model=UserOut, status_code=status.HTTP_200_OK)
 async def update_current_user_username(
-        new_username: Annotated[str, Body(title="Новое имя пользователя")],
+        new_username: Annotated[str, Body(title="Новое имя пользователя", min_length=3)],
         update_user_username_use_case=Depends(get_update_user_username_use_case),
         current_user: User = Depends(get_current_active_verified_user)
 ):
@@ -204,7 +202,7 @@ async def update_current_user_username(
 @router.patch("/{user_id}/username", response_model=UserOut, status_code=status.HTTP_200_OK)
 async def update_user_username(
         user_id: Annotated[int, Path(title="ID пользователя для обновления")],
-        new_username: Annotated[str, Body(title="Новое имя пользователя")],
+        new_username: Annotated[str, Body(title="Новое имя пользователя", min_length=3)],
         update_user_username_use_case=Depends(get_update_user_username_use_case),
         _: User = Depends(get_current_superuser)
 ):
@@ -248,7 +246,7 @@ async def request_password_reset(
 @router.post("/password-reset/{token}", status_code=status.HTTP_200_OK)
 async def update_password(
         token: Annotated[str, Path(title="Токен сброса пароля")],
-        new_password: Annotated[str, Body(title="Новый пароль")],
+        new_password: Annotated[str, Body(title="Новый пароль", min_length=8)],
         update_password_use_case=Depends(get_update_password_use_case),
 ):
     try:
