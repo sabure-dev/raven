@@ -14,7 +14,7 @@ from use_cases.auth import AuthenticateUserUseCase, RefreshTokenUseCase
 from use_cases.users import (
     CreateUserUseCase, VerifyEmailUseCase, GetUserUseCase, GetUsersUseCase,
     DeleteUserUseCase, UpdateUserEmailUseCase, UpdateUserUsernameUseCase,
-    RequestPasswordResetUseCase, UpdatePasswordUseCase
+    RequestPasswordResetUseCase, UpdatePasswordUseCase, ChangePasswordUseCase
 )
 
 
@@ -84,6 +84,12 @@ def get_update_password_use_case(
         token_service_factory: Callable[[], TokenService] = Depends(get_token_service_factory)
 ) -> UpdatePasswordUseCase:
     return UpdatePasswordUseCase(user_service_factory, token_service_factory)
+
+
+def get_change_password_use_case(
+        user_service_factory: Callable[[], UserService] = Depends(get_user_service_factory)
+) -> ChangePasswordUseCase:
+    return ChangePasswordUseCase(user_service_factory)
 
 
 def get_authenticate_user_use_case(

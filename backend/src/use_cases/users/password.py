@@ -1,7 +1,7 @@
 from typing import Callable
 
 from core.exceptions import UnverifiedEmailException
-from schemas.use_cases import RequestPasswordResetInput, UpdatePasswordInput
+from schemas.use_cases import RequestPasswordResetInput, UpdatePasswordInput, ChangePasswordInput
 from services.email import EmailService
 from services.jwt import TokenService
 from services.users import UserService
@@ -53,3 +53,18 @@ class UpdatePasswordUseCase(BaseUseCase[UpdatePasswordInput, None]):
             raise UnverifiedEmailException()
 
         await self.user_service.update_user_password(user, input_data.new_password)
+
+
+class ChangePasswordUseCase(BaseUseCase[ChangePasswordInput, None]):
+    def __init__(
+            self,
+            user_service_factory: Callable[[], UserService]
+    ):
+        self.user_service = user_service_factory()
+
+    async def execute(self, input_data: ChangePasswordInput) -> None:
+        await self.user_service.change_password(
+            input_data.user_id,
+            input_data.current_password,
+            input_data.new_password
+        )

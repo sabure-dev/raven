@@ -48,3 +48,9 @@ class RequestPasswordResetInput(BaseModelWithConfig):
 class UpdatePasswordInput(BaseModelWithConfig):
     token: str
     new_password: str
+
+
+class ChangePasswordInput(BaseModelWithConfig):
+    user_id: int
+    current_password: str
+    new_password: str

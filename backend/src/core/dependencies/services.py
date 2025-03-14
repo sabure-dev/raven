@@ -11,39 +11,18 @@ from services.security import SecurityService
 from services.users import UserService
 
 
-def get_token_service() -> TokenService:
-    return TokenService()
-
-
 def get_token_service_factory() -> Callable[[], TokenService]:
     return lambda: TokenService()
-
-
-def get_email_service() -> EmailService:
-    return EmailService()
 
 
 def get_email_service_factory() -> Callable[[], EmailService]:
     return lambda: EmailService()
 
 
-def get_user_service(
-        user_repository_factory: Callable[[], UserRepository] = Depends(get_user_repository_factory)
-) -> UserService:
-    return UserService(user_repository_factory)
-
-
 def get_user_service_factory(
         user_repository_factory: Callable[[], UserRepository] = Depends(get_user_repository_factory)
 ) -> Callable[[], UserService]:
     return lambda: UserService(user_repository_factory)
-
-
-def get_auth_service(
-        user_repository_factory: Callable[[], UserRepository] = Depends(get_user_repository_factory),
-        token_service_factory: Callable[[], TokenService] = Depends(get_token_service_factory)
-) -> AuthService:
-    return AuthService(user_repository_factory, token_service_factory)
 
 
 def get_auth_service_factory(
@@ -53,8 +32,8 @@ def get_auth_service_factory(
     return lambda: AuthService(user_repository_factory, token_service_factory)
 
 
-def get_security_service(
+def get_security_service_factory(
         user_repository_factory: Callable[[], UserRepository] = Depends(get_user_repository_factory),
         token_service_factory: Callable[[], TokenService] = Depends(get_token_service_factory)
-) -> SecurityService:
-    return SecurityService(user_repository_factory, token_service_factory)
+) -> Callable[[], SecurityService]:
+    return lambda: SecurityService(user_repository_factory, token_service_factory)

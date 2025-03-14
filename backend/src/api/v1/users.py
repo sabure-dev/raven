@@ -1,13 +1,14 @@
-from typing import List, Optional, Annotated
+from typing import List, Optional, Annotated, Callable
 
 from fastapi import APIRouter, Depends, HTTPException, status, Path, Body, BackgroundTasks
 from pydantic import EmailStr
 
 from core.dependencies import (
-    get_get_user_use_case, get_get_users_use_case, get_create_user_use_case,
-    get_verify_email_use_case, get_delete_user_use_case, get_update_user_email_use_case,
+    get_create_user_use_case, get_verify_email_use_case,
+    get_get_user_use_case, get_get_users_use_case,
+    get_delete_user_use_case, get_update_user_email_use_case,
     get_update_user_username_use_case, get_request_password_reset_use_case,
-    get_update_password_use_case, get_user_service,
+    get_update_password_use_case, get_change_password_use_case,
     get_current_active_verified_user, get_current_superuser
 )
 from core.exceptions import (
@@ -19,7 +20,7 @@ from schemas.users import UserOut, UserCreate, ChangePasswordRequest
 from schemas.use_cases import (
     GetUserInput, DeleteUserInput, UpdateUserEmailInput,
     UpdateUserUsernameInput, VerifyEmailInput, RequestPasswordResetInput,
-    UpdatePasswordInput, CreateUserInput
+    UpdatePasswordInput, CreateUserInput, ChangePasswordInput
 )
 from services.users import UserService
 
@@ -263,14 +264,14 @@ async def update_password(
 async def change_current_user_password(
         password_data: Annotated[ChangePasswordRequest, Body(title="Данные для смены пароля")],
         current_user: User = Depends(get_current_active_verified_user),
-        user_service: UserService = Depends(get_user_service)
+        change_password_use_case=Depends(get_change_password_use_case)
 ):
     try:
-        await user_service.change_password(
-            current_user.id,
-            password_data.current_password,
-            password_data.new_password
-        )
+        await change_password_use_case.execute(ChangePasswordInput(
+            user_id=current_user.id,
+            current_password=password_data.current_password,
+            new_password=password_data.new_password
+        ))
         return {"message": "Пароль успешно изменен"}
     except InvalidCredentialsException as e:
         raise HTTPException(
