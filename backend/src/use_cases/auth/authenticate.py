@@ -12,6 +12,8 @@ class AuthenticateUserUseCase(BaseUseCase[OAuth2PasswordRequestForm, TokenRespon
         self.auth_service = auth_service_factory()
 
     async def execute(self, form_data: OAuth2PasswordRequestForm) -> TokenResponse:
-        to_model = {"username": form_data.username, "password": form_data.password}
-        input_data = LoginRequest.model_validate(to_model)
+        input_data = LoginRequest(
+            username=form_data.username,
+            password=form_data.password,
+        )
         return await self.auth_service.authenticate_user(input_data)

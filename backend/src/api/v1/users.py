@@ -1,4 +1,4 @@
-from typing import List, Optional, Annotated, Callable
+from typing import List, Optional, Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status, Path, Body, BackgroundTasks
 from pydantic import EmailStr
@@ -22,7 +22,6 @@ from schemas.use_cases import (
     UpdateUserUsernameInput, VerifyEmailInput, RequestPasswordResetInput,
     UpdatePasswordInput, CreateUserInput, ChangePasswordInput
 )
-from services.users import UserService
 
 router = APIRouter(
     prefix="/users",
@@ -65,12 +64,11 @@ async def get_user_by_id(
 @router.post("", response_model=dict[str, int], status_code=status.HTTP_201_CREATED)
 async def create_user(
         user_to_create: Annotated[UserCreate, Body(title="Данные для создания пользователя")],
-        background_tasks: BackgroundTasks,
         create_user_use_case=Depends(get_create_user_use_case),
 ):
     try:
         user_id = await create_user_use_case.execute(
-            CreateUserInput(user=user_to_create, background_tasks=background_tasks))
+            CreateUserInput(user=user_to_create))
         return {"user_id": user_id}
     except ItemAlreadyExistsException as e:
         raise HTTPException(
@@ -153,7 +151,6 @@ async def update_current_user_email(
 async def update_user_email(
         user_id: Annotated[int, Path(title="ID пользователя для обновления")],
         new_email: Annotated[EmailStr, Body(title="Новый email")],
-        background_tasks: BackgroundTasks,
         update_user_email_use_case=Depends(get_update_user_email_use_case),
         _: User = Depends(get_current_superuser)
 ):
@@ -161,7 +158,6 @@ async def update_user_email(
         updated_user = await update_user_email_use_case.execute(UpdateUserEmailInput(
             user_id=user_id,
             new_email=new_email,
-            background_tasks=background_tasks
         ))
         return updated_user
     except ItemNotFoundException as e:
@@ -228,13 +224,11 @@ async def update_user_username(
 @router.post("/password-reset", status_code=status.HTTP_200_OK)
 async def request_password_reset(
         email: Annotated[EmailStr, Body(title="Email для сброса пароля")],
-        background_tasks: BackgroundTasks,
         request_password_reset_use_case=Depends(get_request_password_reset_use_case),
 ):
     try:
         await request_password_reset_use_case.execute(RequestPasswordResetInput(
             email=email,
-            background_tasks=background_tasks
         ))
         return {"message": "Инструкции по сбросу пароля отправлены на указанный email"}
     except (ItemNotFoundException, UnverifiedEmailException) as e:

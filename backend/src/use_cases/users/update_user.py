@@ -1,5 +1,7 @@
 from typing import Callable
 
+from fastapi import BackgroundTasks
+
 from schemas.use_cases import UpdateUserEmailInput, UpdateUserUsernameInput
 from schemas.users import UserOut
 from services.email import EmailService
@@ -13,11 +15,13 @@ class UpdateUserEmailUseCase(BaseUseCase[UpdateUserEmailInput, UserOut]):
             self,
             user_service_factory: Callable[[], UserService],
             token_service_factory: Callable[[], TokenService],
-            email_service_factory: Callable[[], EmailService]
+            email_service_factory: Callable[[], EmailService],
+            background_tasks: BackgroundTasks,
     ):
         self.user_service = user_service_factory()
         self.token_service = token_service_factory()
         self.email_service = email_service_factory()
+        self.background_tasks = background_tasks
 
     async def execute(self, input_data: UpdateUserEmailInput) -> UserOut:
         updated_user = await self.user_service.update_user_email(
@@ -25,9 +29,9 @@ class UpdateUserEmailUseCase(BaseUseCase[UpdateUserEmailInput, UserOut]):
             input_data.new_email
         )
 
-        token = self.token_service.create_verification_token(updated_user)
+        token = await self.token_service.create_verification_token(updated_user)
 
-        input_data.background_tasks.add_task(
+        self.background_tasks.add_task(
             self.email_service.send_verification_email,
             input_data.new_email,
             token

@@ -1,9 +1,9 @@
-from typing import Callable, Optional, List
+from typing import Callable, List
 
 from pydantic import EmailStr
 
 from core.exceptions import ItemAlreadyExistsException, ItemNotFoundException, UserAlreadyVerifiedException, \
-    InvalidCredentialsException
+    InvalidCredentialsException, UnverifiedEmailException
 from core.utils.password import get_password_hash, verify_password
 from core.utils.repository import AbstractRepository
 from db.models.users import User
@@ -13,6 +13,11 @@ from schemas.users import UserCreate
 class UserService:
     def __init__(self, user_repo_factory: Callable[[], AbstractRepository]):
         self.user_repo = user_repo_factory()
+
+    async def _check_field_unique(self, field_name: str, value: str, current_user_id: int):
+        existing_user = await self.user_repo.find_one_by_field(field_name, value)
+        if existing_user and existing_user.id != current_user_id:
+            raise ItemAlreadyExistsException('User', field_name, value)
 
     async def create_user(self, user: UserCreate) -> (int, User):
         existing_user = await self.user_repo.find_one_by_field('email', user.email)
@@ -38,6 +43,12 @@ class UserService:
             raise ItemNotFoundException('User', 'email', email)
         return user
 
+    async def get_verified_user_by_email(self, email: EmailStr) -> User:
+        user = await self.get_user_by_email(email)
+        if not user.is_verified:
+            raise UnverifiedEmailException()
+        return user
+
     async def get_user_by_username(self, username: str) -> User:
         user = await self.user_repo.find_one_by_field('username', username)
         if not user:
@@ -50,7 +61,7 @@ class UserService:
 
         return await self.user_repo.update_one(user, {'is_verified': is_verified})
 
-    async def get_user_by_id(self, user_id: int) -> Optional[User]:
+    async def get_user_by_id(self, user_id: int) -> User:
         user = await self.user_repo.find_one_by_id(user_id)
         if not user:
             raise ItemNotFoundException('User', "id", str(user_id))
@@ -65,19 +76,13 @@ class UserService:
 
     async def update_user_email(self, user_id: int, new_email: EmailStr) -> User:
         user = await self.get_user_by_id(user_id)
-
-        existing_user = await self.user_repo.find_one_by_field('email', new_email)
-        if existing_user and existing_user.id != user_id:
-            raise ItemAlreadyExistsException('User', 'email', new_email)
+        await self._check_field_unique('email', new_email, user_id)
 
         return await self.user_repo.update_one(user, {'email': new_email, 'is_verified': False})
 
     async def update_user_username(self, user_id: int, new_username: str) -> User:
         user = await self.get_user_by_id(user_id)
-
-        existing_user = await self.user_repo.find_one_by_field('username', new_username)
-        if existing_user and existing_user.id != user_id:
-            raise ItemAlreadyExistsException('User', 'username', new_username)
+        await self._check_field_unique('username', new_username, user_id)
 
         return await self.user_repo.update_one(user, {'username': new_username})
 

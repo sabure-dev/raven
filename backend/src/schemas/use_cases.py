@@ -1,7 +1,4 @@
-from typing import Annotated
-
-from fastapi import BackgroundTasks
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 
 from schemas.users import UserCreate
 
@@ -14,7 +11,6 @@ class BaseModelWithConfig(BaseModel):
 
 class CreateUserInput(BaseModelWithConfig):
     user: UserCreate
-    background_tasks: Annotated[BackgroundTasks, Field(exclude=True)]
 
 
 class VerifyEmailInput(BaseModelWithConfig):
@@ -32,7 +28,6 @@ class DeleteUserInput(BaseModelWithConfig):
 class UpdateUserEmailInput(BaseModelWithConfig):
     user_id: int
     new_email: EmailStr
-    background_tasks: Annotated[BackgroundTasks, Field(exclude=True)]
 
 
 class UpdateUserUsernameInput(BaseModelWithConfig):
@@ -42,7 +37,6 @@ class UpdateUserUsernameInput(BaseModelWithConfig):
 
 class RequestPasswordResetInput(BaseModelWithConfig):
     email: EmailStr
-    background_tasks: Annotated[BackgroundTasks, Field(exclude=True)]
 
 
 class UpdatePasswordInput(BaseModelWithConfig):

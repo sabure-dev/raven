@@ -27,12 +27,13 @@ class AuthService:
         if not user.is_verified:
             raise UnverifiedEmailException()
 
-        return self.token_service.create_tokens(user)
+        return await self.token_service.create_tokens(user)
 
     async def refresh_token(self, refresh_token: str) -> TokenResponse:
         try:
-            payload = self.token_service.verify_token(refresh_token)
-            user = await self.user_repo.find_one_by_field("username", payload["sub"])
+            payload = await self.token_service.verify_token(refresh_token)
+            username = await self.token_service.get_username_from_token_payload(payload)
+            user = await self.user_repo.find_one_by_field("username", username)
             if not user:
                 raise InvalidCredentialsException()
             if not user.is_active:
@@ -40,7 +41,7 @@ class AuthService:
             if not user.is_verified:
                 raise UnverifiedEmailException()
 
-            return self.token_service.create_tokens(user)
+            return await self.token_service.create_tokens(user)
 
         except TokenExpiredException:
             raise

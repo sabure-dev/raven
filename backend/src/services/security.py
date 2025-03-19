@@ -4,8 +4,8 @@ from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
 from core.exceptions import InvalidCredentialsException, TokenExpiredException
+from core.utils.repository import AbstractRepository
 from db.models.users import User
-from repositories.users import UserRepository
 from services.jwt import TokenService
 
 
@@ -14,7 +14,7 @@ class SecurityService:
 
     def __init__(
             self,
-            user_repo_factory: Callable[[], UserRepository],
+            user_repo_factory: Callable[[], AbstractRepository],
             token_service_factory: Callable[[], TokenService]
     ):
         self.user_repo = user_repo_factory()
@@ -22,8 +22,8 @@ class SecurityService:
 
     async def get_current_user(self, token: str) -> User:
         try:
-            payload = self.token_service.verify_token(token)
-            username = payload.get("sub")
+            payload = await self.token_service.verify_token(token)
+            username = await self.token_service.get_username_from_token_payload(payload)
 
             if not username:
                 raise InvalidCredentialsException()
