@@ -26,14 +26,14 @@ def get_user_service_factory(
 
 
 def get_auth_service_factory(
-        user_repository_factory: Callable[[], UserRepository] = Depends(get_user_repository_factory),
+        user_service_factory: Callable[[], UserService] = Depends(get_user_service_factory),
         token_service_factory: Callable[[], TokenService] = Depends(get_token_service_factory)
 ) -> Callable[[], AuthService]:
-    return lambda: AuthService(user_repository_factory, token_service_factory)
+    return lambda: AuthService(user_service_factory, token_service_factory)
 
 
 def get_security_service_factory(
-        user_repository_factory: Callable[[], UserRepository] = Depends(get_user_repository_factory),
+        user_service_factory: Callable[[], UserService] = Depends(get_user_service_factory),
         token_service_factory: Callable[[], TokenService] = Depends(get_token_service_factory)
 ) -> Callable[[], SecurityService]:
-    return lambda: SecurityService(user_repository_factory, token_service_factory)
+    return lambda: SecurityService(user_service_factory, token_service_factory)

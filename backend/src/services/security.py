@@ -1,12 +1,12 @@
 from typing import Callable
 
-from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
-from core.exceptions import InvalidCredentialsException, TokenExpiredException
-from core.utils.repository import AbstractRepository
+from core.exceptions import InvalidCredentialsException, InactiveUserException, \
+    UnverifiedEmailException, InsufficientPermissionsException
 from db.models.users import User
 from services.jwt import TokenService
+from services.users import UserService
 
 
 class SecurityService:
@@ -14,57 +14,32 @@ class SecurityService:
 
     def __init__(
             self,
-            user_repo_factory: Callable[[], AbstractRepository],
+            user_service_factory: Callable[[], UserService],
             token_service_factory: Callable[[], TokenService]
     ):
-        self.user_repo = user_repo_factory()
+        self.user_service = user_service_factory()
         self.token_service = token_service_factory()
 
     async def get_current_user(self, token: str) -> User:
-        try:
-            payload = await self.token_service.verify_token(token)
-            username = await self.token_service.get_username_from_token_payload(payload)
+        payload = await self.token_service.verify_token(token)
+        username = await self.token_service.get_username_from_token_payload(payload)
 
-            if not username:
-                raise InvalidCredentialsException()
+        if not username:
+            raise InvalidCredentialsException()
 
-            user = await self.user_repo.find_one_by_field("username", username)
+        user = await self.user_service.get_user_by_username(username)
 
-            if not user:
-                raise InvalidCredentialsException()
+        if not user.is_active:
+            raise InactiveUserException()
 
-            if not user.is_active:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Неактивный пользователь"
-                )
-
-            return user
-        except (InvalidCredentialsException, TokenExpiredException) as e:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=str(e),
-                headers={"WWW-Authenticate": "Bearer"}
-            )
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Невозможно проверить учетные данные",
-                headers={"WWW-Authenticate": "Bearer"}
-            )
+        return user
 
     async def get_current_active_verified_user(self, current_user: User) -> User:
         if not current_user.is_verified:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Email не подтвержден"
-            )
+            raise UnverifiedEmailException()
         return current_user
 
     async def get_current_superuser(self, current_user: User) -> User:
         if not current_user.is_superuser:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Недостаточно прав"
-            )
+            raise InsufficientPermissionsException()
         return current_user

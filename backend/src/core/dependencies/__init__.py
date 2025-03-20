@@ -1,4 +1,4 @@
-from core.dependencies.database import get_user_repository, get_user_repository_factory
+from core.dependencies.database import get_user_repository_factory
 from core.dependencies.security import (
     get_current_user, get_current_active_verified_user,
     get_current_superuser

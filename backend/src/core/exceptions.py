@@ -1,55 +1,86 @@
-from fastapi import HTTPException, status
+from starlette import status
 
 
-class ItemNotFoundException(Exception):
+class BaseModelException(Exception):
+    def __init__(
+            self,
+            status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
+            message: str = "Internal server error"
+    ):
+        self.status_code = status_code
+        self.message = message
+        super().__init__(self.message)
+
+
+# Common exceptions
+class ItemNotFoundException(BaseModelException):
     def __init__(self, item: str, field: str, value: str):
-        self.item = item
-        self.field = field
-        self.value = value
-        self.message = f"{item} with {field}={value} not found"
-        super().__init__(self.message)
-
-
-class ItemAlreadyExistsException(Exception):
-    def __init__(self, item: str, field: str, value: str):
-        self.item = item
-        self.field = field
-        self.value = value
-        self.message = f"{item} with {field}={value} already exists"
-        super().__init__(self.message)
-
-
-class UserAlreadyVerifiedException(Exception):
-    def __init__(self, user_id: str):
-        self.user_id = user_id
-        self.message = f"User with id={user_id} already verified"
-        super().__init__(self.message)
-
-
-class AuthException(HTTPException):
-    def __init__(self, detail: str):
         super().__init__(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=detail,
-            headers={"WWW-Authenticate": "Bearer"}
+            status_code=status.HTTP_404_NOT_FOUND,
+            message=f"{item} with {field}={value} not found"
+        )
+        self.item = item
+        self.field = field
+        self.value = value
+
+
+class ItemAlreadyExistsException(BaseModelException):
+    def __init__(self, item: str, field: str, value: str):
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            message=f"{item} with {field}={value} already exists"
+        )
+        self.item = item
+        self.field = field
+        self.value = value
+
+
+# User exceptions
+class UserAlreadyVerifiedException(BaseModelException):
+    def __init__(self, user_id: str):
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            message=f"User with id={user_id} already verified"
+        )
+        self.user_id = user_id
+
+
+class InactiveUserException(BaseModelException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            message="Inactive user"
         )
 
 
-class InvalidCredentialsException(AuthException):
+class UnverifiedEmailException(BaseModelException):
     def __init__(self):
-        super().__init__("Invalid credentials")
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            message="Unverified email"
+        )
 
 
-class TokenExpiredException(AuthException):
+class InsufficientPermissionsException(BaseModelException):
     def __init__(self):
-        super().__init__("Token expired")
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            message="Insufficient permissions"
+        )
 
 
-class InactiveUserException(AuthException):
+class InvalidCredentialsException(BaseModelException):
     def __init__(self):
-        super().__init__("User inactive")
+        super().__init__(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            message="Invalid credentials"
+        )
 
 
-class UnverifiedEmailException(AuthException):
+# Token exceptions
+class TokenExpiredException(BaseModelException):
     def __init__(self):
-        super().__init__("Email not verified")
+        super().__init__(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            message="Token expired"
+        )
