@@ -1,4 +1,6 @@
 import uvicorn
+import logging
+from logging import Filter
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette import status
@@ -10,6 +12,19 @@ app = FastAPI(
     title="Raven sneakers shop",
     version="1.0.0",
 )
+
+
+class NoBaseModelExceptionFilter(Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.exc_info:
+            _, exc, _ = record.exc_info
+            if isinstance(exc, BaseModelException):
+                return False
+            return True
+
+
+logging.getLogger("uvicorn.error").addFilter(NoBaseModelExceptionFilter())
+logging.getLogger("uvicorn.access").addFilter(NoBaseModelExceptionFilter())
 
 
 @app.exception_handler(Exception)

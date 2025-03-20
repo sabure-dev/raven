@@ -14,19 +14,14 @@ class UserService:
     def __init__(self, user_repo_factory: Callable[[], AbstractRepository]):
         self.user_repo = user_repo_factory()
 
-    async def _check_field_unique(self, field_name: str, value: str, current_user_id: int):
+    async def _check_field_unique(self, field_name: str, value: str):
         existing_user = await self.user_repo.find_one_by_field(field_name, value)
-        if existing_user and existing_user.id != current_user_id:
+        if existing_user:
             raise ItemAlreadyExistsException('User', field_name, value)
 
     async def create_user(self, user: UserCreate) -> (int, User):
-        existing_user = await self.user_repo.find_one_by_field('email', user.email)
-        if existing_user:
-            raise ItemAlreadyExistsException('User', 'email', user.email)
-
-        existing_user = await self.user_repo.find_one_by_field('username', user.username)
-        if existing_user:
-            raise ItemAlreadyExistsException('User', 'username', user.username)
+        await self._check_field_unique('email', user.email)
+        await self._check_field_unique('username', user.username)
 
         user_dict = user.model_dump()
         user_dict["password"] = get_password_hash(user_dict["password"])
@@ -76,13 +71,13 @@ class UserService:
 
     async def update_user_email(self, user_id: int, new_email: EmailStr) -> User:
         user = await self.get_user_by_id(user_id)
-        await self._check_field_unique('email', new_email, user_id)
+        await self._check_field_unique('email', new_email)
 
         return await self.user_repo.update_one(user, {'email': new_email, 'is_verified': False})
 
     async def update_user_username(self, user_id: int, new_username: str) -> User:
         user = await self.get_user_by_id(user_id)
-        await self._check_field_unique('username', new_username, user_id)
+        await self._check_field_unique('username', new_username)
 
         return await self.user_repo.update_one(user, {'username': new_username})
 

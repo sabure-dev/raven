@@ -1,6 +1,6 @@
 from typing import List, Optional, Annotated
 
-from fastapi import APIRouter, Depends, status, Path, Body, BackgroundTasks
+from fastapi import APIRouter, Depends, status, Path, Body
 from pydantic import EmailStr
 
 from core.dependencies import (
@@ -91,14 +91,12 @@ async def delete_user(
 @router.patch("/me/email", response_model=UserOut, status_code=status.HTTP_200_OK)
 async def update_current_user_email(
         new_email: Annotated[EmailStr, Body(title="Новый email")],
-        background_tasks: BackgroundTasks,
         update_user_email_use_case=Depends(get_update_user_email_use_case),
         current_user: User = Depends(get_current_active_verified_user)
 ):
     updated_user = await update_user_email_use_case.execute(UpdateUserEmailInput(
         user_id=current_user.id,
         new_email=new_email,
-        background_tasks=background_tasks
     ))
     return updated_user
 
