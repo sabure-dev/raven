@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Type, Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.session.base import Base
@@ -20,6 +20,18 @@ class AbstractRepository(ABC):
 
     @abstractmethod
     async def find_all(self) -> list[ModelType]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def find_all_with_filters(
+            self,
+            filters: list | None = None,
+            joins: dict | None = None,
+            options: list | None = None,
+            having: list | None = None,
+            offset: int | None = None,
+            limit: int | None = None,
+    ) -> list[ModelType]:
         raise NotImplementedError
 
     @abstractmethod
@@ -52,6 +64,45 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
 
     async def find_all(self) -> list[ModelType]:
         query = select(self._model)
+        result = await self._session.execute(query)
+        return list(result.scalars().all())
+
+    async def find_all_with_filters(
+            self,
+            filters: list | None = None,
+            joins: dict | None = None,
+            options: list | None = None,
+            having: list | None = None,
+            offset: int | None = None,
+            limit: int | None = None,
+    ) -> list[ModelType]:
+        query = select(self._model)
+
+        if joins:
+            for relation, condition in joins.items():
+                if condition is True:
+                    query = query.join(getattr(self._model, relation))
+                else:
+                    query = query.join(getattr(self._model, relation)).where(condition)
+
+        if filters:
+            query = query.where(and_(*filters))
+
+        if having:
+            query = query.group_by(self._model.id)
+            query = query.having(and_(*having))
+
+        if options:
+            for option in options:
+                query = query.options(option)
+
+        if offset:
+            query = query.offset(offset)
+        if limit:
+            query = query.limit(limit)
+
+        query = query.distinct()
+
         result = await self._session.execute(query)
         return list(result.scalars().all())
 

@@ -12,7 +12,7 @@ class SneakerModel(Base):
     __tablename__ = 'sneaker_models'
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    name: Mapped[str] = mapped_column(index=True)
+    name: Mapped[str] = mapped_column(unique=True)
     brand: Mapped[str] = mapped_column(index=True)
     type: Mapped[str] = mapped_column(index=True)
     description: Mapped[str] = mapped_column()
