@@ -1,37 +1,23 @@
-from typing import Annotated, Optional
+from typing import List, Optional, Annotated
 
-from fastapi import APIRouter, Depends, Body, status, Path, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, status, Path, Body
 from pydantic import EmailStr
 
-from api.v1.dependencies import (
-    get_create_user_use_case,
-    get_verify_email_use_case,
-    get_get_user_use_case,
-    get_get_users_use_case,
-    get_delete_user_use_case,
-    get_update_user_email_use_case,
-    get_update_user_username_use_case,
-    get_request_password_reset_use_case,
-    get_update_password_use_case,
+from core.dependencies import (
+    get_create_user_use_case, get_verify_email_use_case,
+    get_get_user_use_case, get_get_users_use_case,
+    get_delete_user_use_case, get_update_user_email_use_case,
+    get_update_user_username_use_case, get_request_password_reset_use_case,
+    get_update_password_use_case, get_change_password_use_case,
+    get_current_active_verified_user, get_current_superuser
 )
-from core.exceptions import (
-    UserNotFoundException,
-    UserAlreadyExistsException,
-    UserAlreadyVerifiedException,
-    UnverifiedEmailException,
-)
-from schemas.users import UserOut, UserCreate
+from db.models.users import User
+from schemas.users import UserOut, UserCreate, ChangePasswordRequest
 from schemas.use_cases import (
-    CreateUserInput,
-    DeleteUserInput,
-    GetUserInput,
-    RequestPasswordResetInput,
-    UpdatePasswordInput,
-    UpdateUserEmailInput,
-    UpdateUserUsernameInput,
-    VerifyEmailInput,
+    GetUserInput, DeleteUserInput, UpdateUserEmailInput,
+    UpdateUserUsernameInput, VerifyEmailInput, RequestPasswordResetInput,
+    UpdatePasswordInput, CreateUserInput, ChangePasswordInput
 )
-
 
 router = APIRouter(
     prefix="/users",
@@ -39,149 +25,153 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=list[UserOut], status_code=status.HTTP_200_OK)
+@router.get("", response_model=List[UserOut], status_code=status.HTTP_200_OK)
 async def get_users(
         *,
         get_users_use_case=Depends(get_get_users_use_case),
+        _: User = Depends(get_current_superuser)
 ):
-    users = await get_users_use_case.execute(None)
-    return users
+    return await get_users_use_case.execute(None)
+
+
+@router.get("/me", response_model=UserOut, status_code=status.HTTP_200_OK)
+async def get_current_user_info(
+        current_user: User = Depends(get_current_active_verified_user)
+):
+    return current_user.to_read_model()
 
 
 @router.get("/{user_id}", response_model=Optional[UserOut], status_code=status.HTTP_200_OK)
 async def get_user_by_id(
-        user_id: Annotated[int, Path(title="ID of the user to get")],
+        user_id: Annotated[int, Path(title="ID пользователя")],
         get_user_use_case=Depends(get_get_user_use_case),
+        _: User = Depends(get_current_superuser)
 ):
-    try:
-        user = await get_user_use_case.execute(GetUserInput(user_id=user_id))
-        return user
-    except UserNotFoundException as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
+    user = await get_user_use_case.execute(GetUserInput(user_id=user_id))
+    return user
 
 
 @router.post("", response_model=dict[str, int], status_code=status.HTTP_201_CREATED)
 async def create_user(
-        user_to_create: Annotated[UserCreate, Body(title="User to create")],
-        background_tasks: BackgroundTasks,
+        user_to_create: Annotated[UserCreate, Body(title="Данные для создания пользователя")],
         create_user_use_case=Depends(get_create_user_use_case),
 ):
-    try:
-        user_id = await create_user_use_case.execute(CreateUserInput(user=user_to_create, background_tasks=background_tasks))
-        return {"user_id": user_id}
-    except UserAlreadyExistsException as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e)
-        )
+    user_id = await create_user_use_case.execute(
+        CreateUserInput(user=user_to_create)
+    )
+    return {"user_id": user_id}
 
 
 @router.post("/verify/{token}", status_code=status.HTTP_200_OK)
 async def verify_email(
-        token: Annotated[str, Path(title="Verification token")],
+        token: Annotated[str, Path(title="Токен верификации")],
         verify_email_use_case=Depends(get_verify_email_use_case),
 ):
-    try:
-        await verify_email_use_case.execute(VerifyEmailInput(token=token))
-    except (UserNotFoundException, UserAlreadyVerifiedException, ValueError) as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+    await verify_email_use_case.execute(VerifyEmailInput(token=token))
+    return {"message": "Email успешно подтвержден"}
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_current_user(
+        delete_user_use_case=Depends(get_delete_user_use_case),
+        current_user: User = Depends(get_current_active_verified_user)
+):
+    await delete_user_use_case.execute(DeleteUserInput(user_id=current_user.id))
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
-        user_id: Annotated[int, Path(title="ID of the user to delete")],
+        user_id: Annotated[int, Path(title="ID пользователя для удаления")],
         delete_user_use_case=Depends(get_delete_user_use_case),
+        _: User = Depends(get_current_superuser)
 ):
-    try:
-        await delete_user_use_case.execute(DeleteUserInput(user_id=user_id))
-    except UserNotFoundException as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
+    await delete_user_use_case.execute(DeleteUserInput(user_id=user_id))
+
+
+@router.patch("/me/email", response_model=UserOut, status_code=status.HTTP_200_OK)
+async def update_current_user_email(
+        new_email: Annotated[EmailStr, Body(title="Новый email")],
+        update_user_email_use_case=Depends(get_update_user_email_use_case),
+        current_user: User = Depends(get_current_active_verified_user)
+):
+    updated_user = await update_user_email_use_case.execute(UpdateUserEmailInput(
+        user_id=current_user.id,
+        new_email=new_email,
+    ))
+    return updated_user
 
 
 @router.patch("/{user_id}/email", response_model=UserOut, status_code=status.HTTP_200_OK)
 async def update_user_email(
-        user_id: Annotated[int, Path(title="ID of the user to update")],
-        new_email: Annotated[EmailStr, Body(title="New email")],
-        background_tasks: BackgroundTasks,
+        user_id: Annotated[int, Path(title="ID пользователя для обновления")],
+        new_email: Annotated[EmailStr, Body(title="Новый email")],
         update_user_email_use_case=Depends(get_update_user_email_use_case),
+        _: User = Depends(get_current_superuser)
 ):
-    try:
-        updated_user = await update_user_email_use_case.execute(UpdateUserEmailInput(
-            user_id=user_id,
-            new_email=new_email,
-            background_tasks=background_tasks
-        ))
-        return updated_user
-    except UserNotFoundException as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
-    except UserAlreadyExistsException as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e)
-        )
+    updated_user = await update_user_email_use_case.execute(UpdateUserEmailInput(
+        user_id=user_id,
+        new_email=new_email,
+    ))
+    return updated_user
+
+
+@router.patch("/me/username", response_model=UserOut, status_code=status.HTTP_200_OK)
+async def update_current_user_username(
+        new_username: Annotated[str, Body(title="Новое имя пользователя", min_length=3)],
+        update_user_username_use_case=Depends(get_update_user_username_use_case),
+        current_user: User = Depends(get_current_active_verified_user)
+):
+    updated_user = await update_user_username_use_case.execute(UpdateUserUsernameInput(
+        user_id=current_user.id,
+        new_username=new_username
+    ))
+    return updated_user
 
 
 @router.patch("/{user_id}/username", response_model=UserOut, status_code=status.HTTP_200_OK)
 async def update_user_username(
-        user_id: Annotated[int, Path(title="ID of the user to update")],
-        new_username: Annotated[str, Body(title="New username")],
+        user_id: Annotated[int, Path(title="ID пользователя для обновления")],
+        new_username: Annotated[str, Body(title="Новое имя пользователя", min_length=3)],
         update_user_username_use_case=Depends(get_update_user_username_use_case),
+        _: User = Depends(get_current_superuser)
 ):
-    try:
-        updated_user = await update_user_username_use_case.execute(UpdateUserUsernameInput(
-            user_id=user_id,
-            new_username=new_username
-        ))
-        return updated_user
-    except UserNotFoundException as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
-    except (UserAlreadyExistsException, UnverifiedEmailException) as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+    updated_user = await update_user_username_use_case.execute(UpdateUserUsernameInput(
+        user_id=user_id,
+        new_username=new_username
+    ))
+    return updated_user
 
 
 @router.post("/password-reset", status_code=status.HTTP_200_OK)
 async def request_password_reset(
-        email: Annotated[EmailStr, Body(title="Email to reset password for")],
-        background_tasks: BackgroundTasks,
+        email: Annotated[EmailStr, Body(title="Email для сброса пароля")],
         request_password_reset_use_case=Depends(get_request_password_reset_use_case),
 ):
-    try:
-        await request_password_reset_use_case.execute(RequestPasswordResetInput(email=email, background_tasks=background_tasks))
-    except (UserNotFoundException, UnverifiedEmailException) as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+    await request_password_reset_use_case.execute(RequestPasswordResetInput(
+        email=email,
+    ))
+    return {"message": "Инструкции по сбросу пароля отправлены на указанный email"}
 
 
 @router.post("/password-reset/{token}", status_code=status.HTTP_200_OK)
 async def update_password(
-        token: Annotated[str, Path(title="Password reset token")],
-        new_password: Annotated[str, Body(title="New password")],
+        token: Annotated[str, Path(title="Токен сброса пароля")],
+        new_password: Annotated[str, Body(title="Новый пароль", min_length=8)],
         update_password_use_case=Depends(get_update_password_use_case),
 ):
-    try:
-        await update_password_use_case.execute(UpdatePasswordInput(token=token, new_password=new_password))
-    except (UserNotFoundException, UnverifiedEmailException, ValueError) as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+    await update_password_use_case.execute(UpdatePasswordInput(token=token, new_password=new_password))
+    return {"message": "Пароль успешно обновлен"}
+
+
+@router.patch("/me/password", status_code=status.HTTP_200_OK)
+async def change_current_user_password(
+        password_data: Annotated[ChangePasswordRequest, Body(title="Данные для смены пароля")],
+        current_user: User = Depends(get_current_active_verified_user),
+        change_password_use_case=Depends(get_change_password_use_case)
+):
+    await change_password_use_case.execute(ChangePasswordInput(
+        user_id=current_user.id,
+        current_password=password_data.current_password,
+        new_password=password_data.new_password
+    ))
+    return {"message": "Пароль успешно изменен"}

@@ -9,6 +9,14 @@ BASE_DIR = Path(__file__).parent.parent.parent.parent
 load_dotenv()
 
 
+class TestDatabaseSettings(BaseSettings):
+    TEST_DB_HOST: str
+    TEST_DB_NAME: str
+    TEST_DB_USER: str
+    TEST_DB_PASSWORD: str
+    TEST_DB_PORT: str
+
+
 class DatabaseSettings(BaseSettings):
     DB_HOST: str
     DB_NAME: str
@@ -38,6 +46,7 @@ class APISettings(BaseSettings):
 
 
 class Settings(BaseSettings):
+    test_db_settings: TestDatabaseSettings = TestDatabaseSettings()
     db_settings: DatabaseSettings = DatabaseSettings()
     email_settings: EmailSettings = EmailSettings()
     auth_jwt: AuthJWTSettings = AuthJWTSettings()

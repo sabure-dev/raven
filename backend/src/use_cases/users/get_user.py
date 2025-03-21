@@ -11,7 +11,8 @@ class GetUserUseCase(BaseUseCase[GetUserInput, UserOut]):
         self.user_service = user_service_factory()
 
     async def execute(self, input_data: GetUserInput) -> UserOut:
-        return await self.user_service.get_user_by_id(input_data.user_id)
+        user = await self.user_service.get_user_by_id(input_data.user_id)
+        return user.to_read_model()
 
 
 class GetUsersUseCase(BaseUseCase[None, List[UserOut]]):
@@ -19,4 +20,5 @@ class GetUsersUseCase(BaseUseCase[None, List[UserOut]]):
         self.user_service = user_service_factory()
 
     async def execute(self, input_data: None = None) -> List[UserOut]:
-        return await self.user_service.get_users()
+        users = await self.user_service.get_users()
+        return [user.to_read_model() for user in users]

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, Type, Optional, Sequence
+from typing import TypeVar, Generic, Type, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +19,7 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def find_all(self) -> Sequence[ModelType]:
+    async def find_all(self) -> list[ModelType]:
         raise NotImplementedError
 
     @abstractmethod
@@ -48,17 +48,12 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         return instance.id
 
     async def find_one_by_id(self, item_id: int) -> Optional[ModelType]:
-        query = select(self._model).where(self._model.id == item_id)
-        result = await self._session.execute(query)
-        result = result.scalar_one_or_none()
-        if result:
-            return result
-        return None
+        return await self.find_one_by_field('id', item_id)
 
-    async def find_all(self) -> Sequence[ModelType]:
+    async def find_all(self) -> list[ModelType]:
         query = select(self._model)
         result = await self._session.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def delete_one(self, item: ModelType) -> None:
         await self._session.delete(item)

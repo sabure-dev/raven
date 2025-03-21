@@ -16,8 +16,8 @@ class VerifyEmailUseCase(BaseUseCase[VerifyEmailInput, None]):
         self.token_service = token_service_factory()
 
     async def execute(self, input_data: VerifyEmailInput) -> None:
-        payload = self.token_service.verify_token(input_data.token)
-        username = payload.get('sub')
+        payload = await self.token_service.verify_token(input_data.token)
+        username = await self.token_service.get_username_from_token_payload(payload)
 
         user = await self.user_service.get_user_by_username(username)
 

@@ -15,13 +15,13 @@ class TokenService:
         with open(settings.auth_jwt.public_key_path, 'r') as f:
             self.public_key = f.read()
 
-    def create_tokens(self, user: User) -> TokenResponse:
-        access_token = self._create_token(
+    async def create_tokens(self, user: User) -> TokenResponse:
+        access_token = await self._create_token(
             "username",
             user,
             timedelta(minutes=settings.auth_jwt.access_token_expire_minutes)
         )
-        refresh_token = self._create_token(
+        refresh_token = await self._create_token(
             "username",
             user,
             timedelta(days=settings.auth_jwt.refresh_token_expire_days)
@@ -31,15 +31,15 @@ class TokenService:
             refresh_token=refresh_token
         )
 
-    def create_verification_token(self, user: User) -> str:
-        verification_token = self._create_token(
+    async def create_verification_token(self, user: User) -> str:
+        verification_token = await self._create_token(
             "username",
             user,
             timedelta(minutes=settings.auth_jwt.verification_token_expire_minutes)
         )
         return verification_token
 
-    def verify_token(self, token: str) -> dict:
+    async def verify_token(self, token: str) -> dict:
         try:
             return jwt.decode(
                 token,
@@ -51,7 +51,11 @@ class TokenService:
         except jwt.InvalidTokenError:
             raise InvalidCredentialsException()
 
-    def _create_token(self, sub_type: str, user: User, expires_delta: timedelta) -> str:
+    async def get_username_from_token_payload(self, payload: dict) -> str:
+        username = payload.get('sub')
+        return username
+
+    async def _create_token(self, sub_type: str, user: User, expires_delta: timedelta) -> str:
         expire = datetime.now(UTC) + expires_delta
         to_encode = {
             "exp": expire,
