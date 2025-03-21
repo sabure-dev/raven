@@ -1,6 +1,7 @@
 from typing import Callable, List
 
 from pydantic import EmailStr
+from sqlalchemy.exc import IntegrityError
 
 from core.exceptions import ItemAlreadyExistsException, ItemNotFoundException, UserAlreadyVerifiedException, \
     InvalidCredentialsException, UnverifiedEmailException
@@ -14,18 +15,23 @@ class UserService:
     def __init__(self, user_repo_factory: Callable[[], AbstractRepository]):
         self.user_repo = user_repo_factory()
 
-    async def _check_field_unique(self, field_name: str, value: str):
-        existing_user = await self.user_repo.find_one_by_field(field_name, value)
-        if existing_user:
-            raise ItemAlreadyExistsException('User', field_name, value)
+    async def _handle_unique_violation(self, error: IntegrityError, field: str, value: str):
+        if "unique constraint" in str(error).lower():
+            raise ItemAlreadyExistsException('User', field, value)
+        raise
 
     async def create_user(self, user: UserCreate) -> (int, User):
-        await self._check_field_unique('email', user.email)
-        await self._check_field_unique('username', user.username)
-
         user_dict = user.model_dump()
         user_dict["password"] = get_password_hash(user_dict["password"])
-        user_id = await self.user_repo.create_one(user_dict)
+
+        try:
+            user_id = await self.user_repo.create_one(user_dict)
+        except IntegrityError as e:
+            if 'email' in str(e).lower():
+                await self._handle_unique_violation(e, 'email', user.email)
+            elif 'username' in str(e).lower():
+                await self._handle_unique_violation(e, 'username', user.username)
+            raise
 
         created_user = User(**user_dict)
         created_user.id = user_id
@@ -71,15 +77,29 @@ class UserService:
 
     async def update_user_email(self, user_id: int, new_email: EmailStr) -> User:
         user = await self.get_user_by_id(user_id)
-        await self._check_field_unique('email', new_email)
+        try:
+            updated_user = await self.user_repo.update_one(
+                user,
+                {'email': new_email, 'is_verified': False},
+            )
+        except IntegrityError as e:
+            await self._handle_unique_violation(e, 'email', new_email)
+            raise
 
-        return await self.user_repo.update_one(user, {'email': new_email, 'is_verified': False})
+        return updated_user
 
     async def update_user_username(self, user_id: int, new_username: str) -> User:
         user = await self.get_user_by_id(user_id)
-        await self._check_field_unique('username', new_username)
+        try:
+            updated_user = await self.user_repo.update_one(
+                user,
+                {'username': new_username},
+            )
+        except IntegrityError as e:
+            await self._handle_unique_violation(e, 'username', new_username)
+            raise
 
-        return await self.user_repo.update_one(user, {'username': new_username})
+        return updated_user
 
     async def update_user_password(self, user: User, new_password: str) -> User:
         hashed_password = get_password_hash(new_password)
