@@ -68,6 +68,7 @@ class UserService:
             raise ItemNotFoundException('User', "id", str(user_id))
         return user
 
+    # TODO: add search by filters like with sneakers
     async def get_users(self) -> List[User]:
         return await self.user_repo.find_all()
 
