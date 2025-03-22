@@ -2,7 +2,7 @@ from typing import Callable
 
 from fastapi.security import OAuth2PasswordRequestForm
 
-from schemas.auth import LoginRequest, TokenResponse
+from schemas.auth.auth import LoginRequest, TokenResponse
 from services.auth import AuthService
 from use_cases.base import BaseUseCase
 

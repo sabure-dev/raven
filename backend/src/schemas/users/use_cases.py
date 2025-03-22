@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 
-from schemas.users import UserCreate
+from schemas.users.users import UserCreate
 
 
 class BaseModelWithConfig(BaseModel):

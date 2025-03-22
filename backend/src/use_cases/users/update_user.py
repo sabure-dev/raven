@@ -2,8 +2,8 @@ from typing import Callable
 
 from fastapi import BackgroundTasks
 
-from schemas.use_cases import UpdateUserEmailInput, UpdateUserUsernameInput
-from schemas.users import UserOut
+from schemas.users.use_cases import UpdateUserEmailInput, UpdateUserUsernameInput
+from schemas.users.users import UserOut
 from services.email import EmailService
 from services.jwt import TokenService
 from services.users import UserService

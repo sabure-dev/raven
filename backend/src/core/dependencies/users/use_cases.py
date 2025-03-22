@@ -2,15 +2,13 @@ from typing import Callable
 
 from fastapi import Depends, BackgroundTasks
 
-from core.dependencies.services import (
+from core.dependencies.users.services import (
     get_user_service_factory, get_token_service_factory,
-    get_email_service_factory, get_auth_service_factory
 )
-from services.auth import AuthService
+from core.dependencies.email.services import get_email_service_factory
 from services.email import EmailService
 from services.jwt import TokenService
 from services.users import UserService
-from use_cases.auth import AuthenticateUserUseCase, RefreshTokenUseCase
 from use_cases.users import (
     CreateUserUseCase, VerifyEmailUseCase, GetUserUseCase, GetUsersUseCase,
     DeleteUserUseCase, UpdateUserEmailUseCase, UpdateUserUsernameUseCase,
@@ -88,15 +86,3 @@ def get_change_password_use_case(
         user_service_factory: Callable[[], UserService] = Depends(get_user_service_factory)
 ) -> ChangePasswordUseCase:
     return ChangePasswordUseCase(user_service_factory)
-
-
-def get_authenticate_user_use_case(
-        auth_service_factory: Callable[[], AuthService] = Depends(get_auth_service_factory)
-) -> AuthenticateUserUseCase:
-    return AuthenticateUserUseCase(auth_service_factory)
-
-
-def get_refresh_token_use_case(
-        auth_service_factory: Callable[[], AuthService] = Depends(get_auth_service_factory)
-) -> RefreshTokenUseCase:
-    return RefreshTokenUseCase(auth_service_factory)

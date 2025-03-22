@@ -1,6 +1,6 @@
 from typing import Callable
 
-from schemas.use_cases import VerifyEmailInput
+from schemas.users.use_cases import VerifyEmailInput
 from services.jwt import TokenService
 from services.users import UserService
 from use_cases.base import BaseUseCase

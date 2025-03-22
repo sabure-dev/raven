@@ -1,7 +1,7 @@
 from typing import Callable, List
 
-from schemas.use_cases import GetUserInput
-from schemas.users import UserOut
+from schemas.users.use_cases import GetUserInput
+from schemas.users.users import UserOut
 from services.users import UserService
 from use_cases.base import BaseUseCase
 

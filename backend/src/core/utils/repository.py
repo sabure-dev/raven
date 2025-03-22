@@ -77,7 +77,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
             limit: int | None = None,
     ) -> list[ModelType]:
         query = select(self._model)
-
         if joins:
             for relation, condition in joins.items():
                 if condition is True:

@@ -2,7 +2,7 @@ from typing import Callable
 
 from core.exceptions import InvalidCredentialsException, InactiveUserException, UnverifiedEmailException
 from core.utils.password import verify_password
-from schemas.auth import LoginRequest, TokenResponse
+from schemas.auth.auth import LoginRequest, TokenResponse
 from services.jwt import TokenService
 from services.users import UserService
 

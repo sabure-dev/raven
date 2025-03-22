@@ -5,7 +5,7 @@ from sqlalchemy import String, DateTime, func, Float, CheckConstraint
 from sqlalchemy.orm import mapped_column, Mapped
 
 from db.session.base import Base
-from schemas.users import UserOut
+from schemas.users.users import UserOut
 
 
 class User(Base):

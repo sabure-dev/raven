@@ -2,7 +2,7 @@ from typing import Callable
 
 from fastapi import BackgroundTasks
 
-from schemas.use_cases import RequestPasswordResetInput, UpdatePasswordInput, ChangePasswordInput
+from schemas.users.use_cases import RequestPasswordResetInput, UpdatePasswordInput, ChangePasswordInput
 from services.email import EmailService
 from services.jwt import TokenService
 from services.users import UserService

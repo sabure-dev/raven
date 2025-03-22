@@ -3,7 +3,7 @@ from datetime import timedelta, datetime, UTC
 from core.config.config import settings
 from core.exceptions import InvalidCredentialsException, TokenExpiredException
 from db.models.users import User
-from schemas.auth import TokenResponse
+from schemas.auth.auth import TokenResponse
 
 import jwt
 

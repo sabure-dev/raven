@@ -6,7 +6,7 @@ from sqlalchemy.orm import joinedload
 
 from core.utils.repository import AbstractRepository
 from db.models.sneakers import SneakerModel, SneakerVariant
-from schemas.sneaker_model import SneakerModelCreate
+from schemas.sneaker_model.sneaker_model import SneakerModelCreate
 from core.exceptions import ItemAlreadyExistsException, ItemNotFoundException
 
 
@@ -19,7 +19,7 @@ class SneakerModelService:
             raise ItemAlreadyExistsException('SneakerModel', field, value)
         raise
 
-    async def create_sneakers_model(self, sneaker_model: SneakerModelCreate) -> (int, SneakerModel):
+    async def create_sneaker_model(self, sneaker_model: SneakerModelCreate) -> int:
         sneaker_model_dict = sneaker_model.model_dump()
         try:
             sneaker_id = await self.sneaker_model_repo.create_one(sneaker_model_dict)
@@ -28,16 +28,13 @@ class SneakerModelService:
                 await self._handle_unique_violation(e, 'name', sneaker_model.name)
             raise
 
-        created_sneaker_model = SneakerModel(**sneaker_model_dict)
-        created_sneaker_model.id = sneaker_id
-
-        return sneaker_id, created_sneaker_model
+        return sneaker_id
 
     async def get_sneakers_models_with_filters(
             self,
             name: str | None = None,
             brand: str | None = None,
-            sneaker_type: str | None = None,
+            sneaker_model_type: str | None = None,
             min_price: float | None = None,
             max_price: float | None = None,
             sizes: list[float] | None = None,
@@ -56,8 +53,8 @@ class SneakerModelService:
             filters.append(SneakerModel.name == name)
         if brand:
             filters.append(SneakerModel.brand == brand)
-        if sneaker_type:
-            filters.append(SneakerModel.type == sneaker_type)
+        if sneaker_model_type:
+            filters.append(SneakerModel.type == sneaker_model_type)
 
         if min_price is not None:
             filters.append(SneakerModel.price >= min_price)
@@ -72,13 +69,13 @@ class SneakerModelService:
             filters.append(search_filter)
 
         if sizes:
-            joins[SneakerModel.variants] = SneakerVariant.size.in_(sizes)
+            joins["variants"] = SneakerVariant.size.in_(sizes)
 
         if include_variants:
             options.append(joinedload(SneakerModel.variants))
 
         if in_stock is not None:
-            joins[SneakerModel.variants] = True
+            joins["variants"] = True
             if in_stock:
                 having.append(func.sum(SneakerVariant.quantity) > 0)
             else:
@@ -86,9 +83,9 @@ class SneakerModelService:
 
         return await self.sneaker_model_repo.find_all_with_filters(
             filters=filters,
-            joins=joins if joins else None,
+            joins=joins,
             options=options,
-            having=having if having else None,
+            having=having,
             offset=offset,
             limit=limit
         )

@@ -1,7 +1,7 @@
 from typing import Callable
 from fastapi import Depends
 
-from core.dependencies.services import get_security_service_factory
+from core.dependencies.users.services import get_security_service_factory
 from db.models.users import User
 from services.security import SecurityService
 

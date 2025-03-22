@@ -1,19 +1,19 @@
-from typing import List, Optional, Annotated
+from typing import List, Annotated
 
 from fastapi import APIRouter, Depends, status, Path, Body
 from pydantic import EmailStr
 
-from core.dependencies import (
+from core.dependencies.users.use_cases import (
     get_create_user_use_case, get_verify_email_use_case,
     get_get_user_use_case, get_get_users_use_case,
     get_delete_user_use_case, get_update_user_email_use_case,
     get_update_user_username_use_case, get_request_password_reset_use_case,
     get_update_password_use_case, get_change_password_use_case,
-    get_current_active_verified_user, get_current_superuser
 )
+from core.dependencies.users.security import get_current_active_verified_user, get_current_superuser
 from db.models.users import User
-from schemas.users import UserOut, UserCreate, ChangePasswordRequest
-from schemas.use_cases import (
+from schemas.users.users import UserOut, UserCreate, ChangePasswordRequest
+from schemas.users.use_cases import (
     GetUserInput, DeleteUserInput, UpdateUserEmailInput,
     UpdateUserUsernameInput, VerifyEmailInput, RequestPasswordResetInput,
     UpdatePasswordInput, CreateUserInput, ChangePasswordInput
@@ -41,7 +41,7 @@ async def get_current_user_info(
     return current_user.to_read_model()
 
 
-@router.get("/{user_id}", response_model=Optional[UserOut], status_code=status.HTTP_200_OK)
+@router.get("/{user_id}", response_model=UserOut, status_code=status.HTTP_200_OK)
 async def get_user_by_id(
         user_id: Annotated[int, Path(title="ID пользователя")],
         get_user_use_case=Depends(get_get_user_use_case),

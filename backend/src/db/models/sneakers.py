@@ -1,11 +1,11 @@
-from sqlalchemy import ForeignKey, CheckConstraint, Float, Integer
+from sqlalchemy import ForeignKey, CheckConstraint, Float
 
 from db.session.base import Base
 
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
-from schemas.sneaker_model import SneakerModelOut
-from schemas.sneaker_variant import SneakerVariantOut
+from schemas.sneaker_model.sneaker_model import SneakerModelOut
+from schemas.sneaker_variant.sneaker_variant import SneakerVariantOut
 
 
 class SneakerModel(Base):
@@ -38,7 +38,7 @@ class SneakerVariant(Base):
 
     model_id: Mapped[int] = mapped_column(ForeignKey('sneaker_models.id'), index=True)
     size: Mapped[float] = mapped_column(index=True)
-    quantity: Mapped[int] = mapped_column(Integer(), CheckConstraint('quantity >= 0'), default=0)
+    quantity: Mapped[int] = mapped_column(CheckConstraint('quantity >= 0'), default=0)
 
     model: Mapped["SneakerModel"] = relationship("SneakerModel", back_populates="variants")
 

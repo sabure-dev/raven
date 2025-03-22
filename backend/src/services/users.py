@@ -8,7 +8,7 @@ from core.exceptions import ItemAlreadyExistsException, ItemNotFoundException, U
 from core.utils.password import get_password_hash, verify_password
 from core.utils.repository import AbstractRepository
 from db.models.users import User
-from schemas.users import UserCreate
+from schemas.users.users import UserCreate
 
 
 class UserService:

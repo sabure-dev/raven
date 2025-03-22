@@ -3,8 +3,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
-from core.dependencies import get_authenticate_user_use_case, get_refresh_token_use_case
-from schemas.auth import TokenResponse, RefreshTokenRequest
+from core.dependencies.auth.use_cases import get_authenticate_user_use_case, get_refresh_token_use_case
+from schemas.auth.auth import TokenResponse, RefreshTokenRequest
 from use_cases.auth import AuthenticateUserUseCase, RefreshTokenUseCase
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
