@@ -35,6 +35,14 @@ class ItemAlreadyExistsException(BaseModelException):
         self.value = value
 
 
+class NoDataProvidedException(BaseModelException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            message="No data provided for option"
+        )
+
+
 # User exceptions
 class UserAlreadyVerifiedException(BaseModelException):
     def __init__(self, user_id: str):
