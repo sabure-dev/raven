@@ -28,7 +28,6 @@ class AbstractRepository(ABC):
             filters: list | None = None,
             joins: dict | None = None,
             options: list | None = None,
-            having: list | None = None,
             offset: int | None = None,
             limit: int | None = None,
     ) -> list[ModelType]:
@@ -72,7 +71,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
             filters: list | None = None,
             joins: dict | None = None,
             options: list | None = None,
-            having: list | None = None,
             offset: int | None = None,
             limit: int | None = None,
     ) -> list[ModelType]:
@@ -87,10 +85,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         if filters:
             query = query.where(and_(*filters))
 
-        if having:
-            query = query.group_by(self._model.id)
-            query = query.having(and_(*having))
-
         if options:
             for option in options:
                 query = query.options(option)
@@ -103,7 +97,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         query = query.distinct()
 
         result = await self._session.execute(query)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def delete_one(self, item: ModelType) -> None:
         await self._session.delete(item)

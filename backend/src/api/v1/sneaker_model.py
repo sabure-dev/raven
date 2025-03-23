@@ -44,9 +44,9 @@ async def get_sneakers_models_by_filters(
         sneaker_model_params: Annotated[SneakerModelParams, Query(title="Параметры для пльзователя")],
         get_sneakers_models_use_case=Depends(get_get_sneakers_models_use_case),
 ):
-    sneaker_models = await get_sneakers_models_use_case.execute(
+    sneakers_models = await get_sneakers_models_use_case.execute(
         GetSneakersModelsInput(
             params=sneaker_model_params
         )
     )
-    return sneaker_models
+    return sneakers_models

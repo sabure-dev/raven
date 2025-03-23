@@ -1,6 +1,6 @@
 from typing import Callable
 
-from sqlalchemy import or_, func
+from sqlalchemy import or_, and_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
@@ -42,12 +42,12 @@ class SneakerModelService:
             include_variants: bool = False,
             in_stock: bool | None = None,
             offset: int | None = None,
-            limit: int | None = None
+            limit: int | None = None,
     ) -> list[SneakerModel]:
         filters = []
-        joins = {}
-        having = []
+        variant_filters = []
         options = []
+        joins = {}
 
         if name:
             filters.append(SneakerModel.name == name)
@@ -55,37 +55,38 @@ class SneakerModelService:
             filters.append(SneakerModel.brand == brand)
         if sneaker_model_type:
             filters.append(SneakerModel.type == sneaker_model_type)
-
         if min_price is not None:
             filters.append(SneakerModel.price >= min_price)
         if max_price is not None:
             filters.append(SneakerModel.price <= max_price)
 
-        if search_query:
-            search_filter = or_(
-                SneakerModel.name.ilike(f"%{search_query}%"),
-                SneakerModel.description.ilike(f"%{search_query}%")
-            )
-            filters.append(search_filter)
-
         if sizes:
-            joins["variants"] = SneakerVariant.size.in_(sizes)
+            variant_filters.append(SneakerVariant.size.in_(sizes))
+
+        if in_stock is not None:
+            variant_condition = (
+                SneakerVariant.quantity > 0 if in_stock
+                else SneakerVariant.quantity == 0
+            )
+            variant_filters.append(variant_condition)
+
+        if variant_filters:
+            joins["variants"] = and_(*variant_filters)
+
+        if search_query:
+            search_pattern = f"%{search_query}%"
+            filters.append(or_(
+                SneakerModel.name.ilike(search_pattern),
+                SneakerModel.description.ilike(search_pattern)
+            ))
 
         if include_variants:
             options.append(joinedload(SneakerModel.variants))
-
-        if in_stock is not None:
-            joins["variants"] = True
-            if in_stock:
-                having.append(func.sum(SneakerVariant.quantity) > 0)
-            else:
-                having.append(func.sum(SneakerVariant.quantity) == 0)
 
         return await self.sneaker_model_repo.find_all_with_filters(
             filters=filters,
             joins=joins,
             options=options,
-            having=having,
             offset=offset,
             limit=limit
         )

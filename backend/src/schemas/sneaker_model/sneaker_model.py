@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from schemas.sneaker_variant.sneaker_variant import SneakerVariantOut
 
 
 class SneakerModelBase(BaseModel):
@@ -6,7 +8,7 @@ class SneakerModelBase(BaseModel):
     brand: str
     type: str
     description: str
-    price: float
+    price: float = Field(..., ge=0)
 
 
 class SneakerModelCreate(SneakerModelBase):
@@ -15,6 +17,7 @@ class SneakerModelCreate(SneakerModelBase):
 
 class SneakerModelOut(SneakerModelBase):
     id: int
+    variants: list[SneakerVariantOut] | None = None
 
 
 class SneakerModelParams(BaseModel):
