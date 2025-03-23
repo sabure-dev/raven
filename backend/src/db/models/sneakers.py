@@ -21,6 +21,7 @@ class SneakerModel(Base):
         "SneakerVariant",
         back_populates="model",
         lazy='raise',
+        cascade="all, delete-orphan"
     )
 
     __table_args__ = (
