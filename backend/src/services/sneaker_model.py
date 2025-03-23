@@ -6,8 +6,8 @@ from sqlalchemy.orm import joinedload
 
 from core.utils.repository import AbstractRepository
 from db.models.sneakers import SneakerModel, SneakerVariant
-from schemas.sneaker_model.sneaker_model import SneakerModelCreate
-from core.exceptions import ItemAlreadyExistsException, ItemNotFoundException
+from schemas.sneaker_model.sneaker_model import SneakerModelCreate, SneakerModelUpdate
+from core.exceptions import ItemAlreadyExistsException, ItemNotFoundException, NoDataProvidedException
 
 
 class SneakerModelService:
@@ -97,16 +97,25 @@ class SneakerModelService:
             raise ItemNotFoundException('SneakerModel', 'id', str(sneaker_model_id))
         return sneaker_model
 
-    async def update_sneaker_model(self, sneaker_model_id: int,
-                                   new_sneaker_model: SneakerModelCreate) -> SneakerModel:
+    async def update_sneaker_model(
+            self,
+            sneaker_model_id: int,
+            update_sneaker_model: SneakerModelUpdate
+    ) -> SneakerModel:
         sneaker_model = await self.get_sneaker_model_by_id(sneaker_model_id)
+
+        update_values = update_sneaker_model.model_dump(exclude_unset=True)
+
+        if not update_values:
+            raise NoDataProvidedException()
+
         try:
             updated_sneaker_model = await self.sneaker_model_repo.update_one(
                 sneaker_model,
-                new_sneaker_model.model_dump()
+                update_values
             )
         except IntegrityError as e:
-            await self._handle_unique_violation(e, 'name', new_sneaker_model.name)
+            await self._handle_unique_violation(e, 'name', update_sneaker_model.name)
             raise
 
         return updated_sneaker_model

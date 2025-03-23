@@ -20,6 +20,14 @@ class SneakerModelOut(SneakerModelBase):
     variants: list[SneakerVariantOut] | None = None
 
 
+class SneakerModelUpdate(BaseModel):
+    name: str | None = None
+    brand: str | None = None
+    type: str | None = None
+    description: str | None = None
+    price: float | None = Field(None, ge=0)
+
+
 class SneakerModelParams(BaseModel):
     name: str | None = None
     brand: str | None = None
