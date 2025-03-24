@@ -39,9 +39,7 @@ async def universal_exception_handler(request: Request, exc: Exception) -> JSONR
         headers = None
 
     return JSONResponse(
-        status_code=status_code,
-        content={"detail": detail},
-        headers=headers
+        status_code=status_code, content={"detail": detail}, headers=headers
     )
 
 

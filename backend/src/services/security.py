@@ -2,8 +2,12 @@ from typing import Callable
 
 from fastapi.security import OAuth2PasswordBearer
 
-from core.exceptions import InvalidCredentialsException, InactiveUserException, \
-    UnverifiedEmailException, InsufficientPermissionsException
+from core.exceptions import (
+    InvalidCredentialsException,
+    InactiveUserException,
+    UnverifiedEmailException,
+    InsufficientPermissionsException,
+)
 from db.models.users import User
 from services.jwt import TokenService
 from services.users import UserService
@@ -15,7 +19,7 @@ class SecurityService:
     def __init__(
             self,
             user_service_factory: Callable[[], UserService],
-            token_service_factory: Callable[[], TokenService]
+            token_service_factory: Callable[[], TokenService],
     ):
         self.user_service = user_service_factory()
         self.token_service = token_service_factory()

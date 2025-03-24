@@ -10,32 +10,29 @@ import jwt
 
 class TokenService:
     def __init__(self):
-        with open(settings.auth_jwt.private_key_path, 'r') as f:
+        with open(settings.auth_jwt.private_key_path, "r") as f:
             self.private_key = f.read()
-        with open(settings.auth_jwt.public_key_path, 'r') as f:
+        with open(settings.auth_jwt.public_key_path, "r") as f:
             self.public_key = f.read()
 
     async def create_tokens(self, user: User) -> TokenResponse:
         access_token = await self._create_token(
             "username",
             user,
-            timedelta(minutes=settings.auth_jwt.access_token_expire_minutes)
+            timedelta(minutes=settings.auth_jwt.access_token_expire_minutes),
         )
         refresh_token = await self._create_token(
             "username",
             user,
-            timedelta(days=settings.auth_jwt.refresh_token_expire_days)
+            timedelta(days=settings.auth_jwt.refresh_token_expire_days),
         )
-        return TokenResponse(
-            access_token=access_token,
-            refresh_token=refresh_token
-        )
+        return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
     async def create_verification_token(self, user: User) -> str:
         verification_token = await self._create_token(
             "username",
             user,
-            timedelta(minutes=settings.auth_jwt.verification_token_expire_minutes)
+            timedelta(minutes=settings.auth_jwt.verification_token_expire_minutes),
         )
         return verification_token
 
@@ -52,17 +49,17 @@ class TokenService:
             raise InvalidCredentialsException()
 
     async def get_username_from_token_payload(self, payload: dict) -> str:
-        username = payload.get('sub')
+        username = payload.get("sub")
         return username
 
-    async def _create_token(self, sub_type: str, user: User, expires_delta: timedelta) -> str:
+    async def _create_token(
+            self, sub_type: str, user: User, expires_delta: timedelta
+    ) -> str:
         expire = datetime.now(UTC) + expires_delta
         to_encode = {
             "exp": expire,
             "sub": getattr(user, sub_type),
         }
         return jwt.encode(
-            to_encode,
-            self.private_key,
-            algorithm=settings.auth_jwt.algorithm
+            to_encode, self.private_key, algorithm=settings.auth_jwt.algorithm
         )

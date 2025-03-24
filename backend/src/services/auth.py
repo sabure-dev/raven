@@ -1,6 +1,10 @@
 from typing import Callable
 
-from core.exceptions import InvalidCredentialsException, InactiveUserException, UnverifiedEmailException
+from core.exceptions import (
+    InvalidCredentialsException,
+    InactiveUserException,
+    UnverifiedEmailException,
+)
 from core.utils.password import verify_password
 from schemas.auth.auth import LoginRequest, TokenResponse
 from services.jwt import TokenService
@@ -11,7 +15,7 @@ class AuthService:
     def __init__(
             self,
             user_service_factory: Callable[[], UserService],
-            token_service_factory: Callable[[], TokenService]
+            token_service_factory: Callable[[], TokenService],
     ):
         self.user_service = user_service_factory()
         self.token_service = token_service_factory()

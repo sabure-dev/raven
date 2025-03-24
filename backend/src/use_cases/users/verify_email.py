@@ -10,7 +10,7 @@ class VerifyEmailUseCase(BaseUseCase[VerifyEmailInput, None]):
     def __init__(
             self,
             user_service_factory: Callable[[], UserService],
-            token_service_factory: Callable[[], TokenService]
+            token_service_factory: Callable[[], TokenService],
     ):
         self.user_service = user_service_factory()
         self.token_service = token_service_factory()

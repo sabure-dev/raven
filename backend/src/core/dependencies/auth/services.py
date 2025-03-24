@@ -11,6 +11,8 @@ from services.users import UserService
 
 def get_auth_service_factory(
         user_service_factory: Callable[[], UserService] = Depends(get_user_service_factory),
-        token_service_factory: Callable[[], TokenService] = Depends(get_token_service_factory)
+        token_service_factory: Callable[[], TokenService] = Depends(
+            get_token_service_factory
+        ),
 ) -> Callable[[], AuthService]:
     return lambda: AuthService(user_service_factory, token_service_factory)

@@ -2,7 +2,11 @@ from typing import Callable
 
 from fastapi import BackgroundTasks
 
-from schemas.users.use_cases import RequestPasswordResetInput, UpdatePasswordInput, ChangePasswordInput
+from schemas.users.use_cases import (
+    RequestPasswordResetInput,
+    UpdatePasswordInput,
+    ChangePasswordInput,
+)
 from services.email import EmailService
 from services.jwt import TokenService
 from services.users import UserService
@@ -15,7 +19,7 @@ class RequestPasswordResetUseCase(BaseUseCase[RequestPasswordResetInput, None]):
             user_service_factory: Callable[[], UserService],
             token_service_factory: Callable[[], TokenService],
             email_service_factory: Callable[[], EmailService],
-            background_tasks: BackgroundTasks
+            background_tasks: BackgroundTasks,
     ):
         self.user_service = user_service_factory()
         self.token_service = token_service_factory()
@@ -28,9 +32,7 @@ class RequestPasswordResetUseCase(BaseUseCase[RequestPasswordResetInput, None]):
         token = await self.token_service.create_verification_token(user)
 
         self.background_tasks.add_task(
-            self.email_service.send_change_password_email,
-            input_data.email,
-            token
+            self.email_service.send_change_password_email, input_data.email, token
         )
 
 
@@ -38,7 +40,7 @@ class UpdatePasswordUseCase(BaseUseCase[UpdatePasswordInput, None]):
     def __init__(
             self,
             user_service_factory: Callable[[], UserService],
-            token_service_factory: Callable[[], TokenService]
+            token_service_factory: Callable[[], TokenService],
     ):
         self.user_service = user_service_factory()
         self.token_service = token_service_factory()
@@ -53,15 +55,10 @@ class UpdatePasswordUseCase(BaseUseCase[UpdatePasswordInput, None]):
 
 
 class ChangePasswordUseCase(BaseUseCase[ChangePasswordInput, None]):
-    def __init__(
-            self,
-            user_service_factory: Callable[[], UserService]
-    ):
+    def __init__(self, user_service_factory: Callable[[], UserService]):
         self.user_service = user_service_factory()
 
     async def execute(self, input_data: ChangePasswordInput) -> None:
         await self.user_service.change_password(
-            input_data.user_id,
-            input_data.current_password,
-            input_data.new_password
+            input_data.user_id, input_data.current_password, input_data.new_password
         )

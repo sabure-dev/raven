@@ -7,16 +7,22 @@ from sqlalchemy.orm import joinedload
 from core.utils.repository import AbstractRepository
 from db.models.sneakers import SneakerModel, SneakerVariant
 from schemas.sneaker_model.sneaker_model import SneakerModelCreate, SneakerModelUpdate
-from core.exceptions import ItemAlreadyExistsException, ItemNotFoundException, NoDataProvidedException
+from core.exceptions import (
+    ItemAlreadyExistsException,
+    ItemNotFoundException,
+    NoDataProvidedException,
+)
 
 
 class SneakerModelService:
     def __init__(self, sneaker_model_factory: Callable[[], AbstractRepository]):
         self.sneaker_model_repo = sneaker_model_factory()
 
-    async def _handle_unique_violation(self, error: IntegrityError, field: str, value: str):
+    async def _handle_unique_violation(
+            self, error: IntegrityError, field: str, value: str
+    ):
         if "unique constraint" in str(error).lower():
-            raise ItemAlreadyExistsException('SneakerModel', field, value)
+            raise ItemAlreadyExistsException("SneakerModel", field, value)
         raise
 
     async def create_sneaker_model(self, sneaker_model: SneakerModelCreate) -> int:
@@ -24,8 +30,8 @@ class SneakerModelService:
         try:
             sneaker_id = await self.sneaker_model_repo.create_one(sneaker_model_dict)
         except IntegrityError as e:
-            if 'name' in str(e).lower():
-                await self._handle_unique_violation(e, 'name', sneaker_model.name)
+            if "name" in str(e).lower():
+                await self._handle_unique_violation(e, "name", sneaker_model.name)
             raise
 
         return sneaker_id
@@ -65,7 +71,8 @@ class SneakerModelService:
 
         if in_stock is not None:
             variant_condition = (
-                SneakerVariant.quantity > 0 if in_stock
+                SneakerVariant.quantity > 0
+                if in_stock
                 else SneakerVariant.quantity == 0
             )
             variant_filters.append(variant_condition)
@@ -75,32 +82,28 @@ class SneakerModelService:
 
         if search_query:
             search_pattern = f"%{search_query}%"
-            filters.append(or_(
-                SneakerModel.name.ilike(search_pattern),
-                SneakerModel.description.ilike(search_pattern)
-            ))
+            filters.append(
+                or_(
+                    SneakerModel.name.ilike(search_pattern),
+                    SneakerModel.description.ilike(search_pattern),
+                )
+            )
 
         if include_variants:
             options.append(joinedload(SneakerModel.variants))
 
         return await self.sneaker_model_repo.find_all_with_filters(
-            filters=filters,
-            joins=joins,
-            options=options,
-            offset=offset,
-            limit=limit
+            filters=filters, joins=joins, options=options, offset=offset, limit=limit
         )
 
     async def get_sneaker_model_by_id(self, sneaker_model_id: int) -> SneakerModel:
         sneaker_model = await self.sneaker_model_repo.find_one_by_id(sneaker_model_id)
         if not sneaker_model:
-            raise ItemNotFoundException('SneakerModel', 'id', str(sneaker_model_id))
+            raise ItemNotFoundException("SneakerModel", "id", str(sneaker_model_id))
         return sneaker_model
 
     async def update_sneaker_model(
-            self,
-            sneaker_model_id: int,
-            update_sneaker_model: SneakerModelUpdate
+            self, sneaker_model_id: int, update_sneaker_model: SneakerModelUpdate
     ) -> SneakerModel:
         sneaker_model = await self.get_sneaker_model_by_id(sneaker_model_id)
 
@@ -111,11 +114,10 @@ class SneakerModelService:
 
         try:
             updated_sneaker_model = await self.sneaker_model_repo.update_one(
-                sneaker_model,
-                update_values
+                sneaker_model, update_values
             )
         except IntegrityError as e:
-            await self._handle_unique_violation(e, 'name', update_sneaker_model.name)
+            await self._handle_unique_violation(e, "name", update_sneaker_model.name)
             raise
 
         return updated_sneaker_model

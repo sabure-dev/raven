@@ -28,9 +28,7 @@ class CreateUserUseCase(BaseUseCase[CreateUserInput, int]):
         token = await self.token_service.create_verification_token(user)
 
         self.background_tasks.add_task(
-            self.email_service.send_verification_email,
-            input_data.user.email,
-            token
+            self.email_service.send_verification_email, input_data.user.email, token
         )
 
         return user_id

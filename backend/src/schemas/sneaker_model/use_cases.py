@@ -1,6 +1,10 @@
 from pydantic import BaseModel
 
-from schemas.sneaker_model.sneaker_model import SneakerModelCreate, SneakerModelParams, SneakerModelUpdate
+from schemas.sneaker_model.sneaker_model import (
+    SneakerModelCreate,
+    SneakerModelParams,
+    SneakerModelUpdate,
+)
 
 
 class BaseModelWithConfig(BaseModel):

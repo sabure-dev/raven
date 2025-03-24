@@ -13,5 +13,7 @@ class CreateSneakerModelUseCase(BaseUseCase[CreateSneakerModelInput, int]):
         self.sneaker_model_service = sneaker_model_service_factory()
 
     async def execute(self, input_data: CreateSneakerModelInput) -> int:
-        sneaker_model_id = await self.sneaker_model_service.create_sneaker_model(input_data.sneaker_model)
+        sneaker_model_id = await self.sneaker_model_service.create_sneaker_model(
+            input_data.sneaker_model
+        )
         return sneaker_model_id

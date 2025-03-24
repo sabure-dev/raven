@@ -55,7 +55,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         return instance.id
 
     async def find_one_by_id(self, item_id: int) -> Optional[ModelType]:
-        return await self.find_one_by_field('id', item_id)
+        return await self.find_one_by_field("id", item_id)
 
     async def find_all_with_filters(
             self,
