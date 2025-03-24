@@ -1,4 +1,4 @@
-from typing import Callable, List
+from typing import Callable
 
 from pydantic import EmailStr
 from sqlalchemy.exc import IntegrityError
@@ -67,10 +67,6 @@ class UserService:
         if not user:
             raise ItemNotFoundException('User', "id", str(user_id))
         return user
-
-    # TODO: add search by filters like with sneakers
-    async def get_users(self) -> List[User]:
-        return await self.user_repo.find_all()
 
     async def delete_user(self, user_id: int) -> None:
         user = await self.get_user_by_id(user_id)

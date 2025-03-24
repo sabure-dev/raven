@@ -10,7 +10,7 @@ from services.email import EmailService
 from services.jwt import TokenService
 from services.users import UserService
 from use_cases.users import (
-    CreateUserUseCase, VerifyEmailUseCase, GetUserUseCase, GetUsersUseCase,
+    CreateUserUseCase, VerifyEmailUseCase, GetUserUseCase,
     DeleteUserUseCase, UpdateUserEmailUseCase, UpdateUserUsernameUseCase,
     RequestPasswordResetUseCase, UpdatePasswordUseCase, ChangePasswordUseCase
 )
@@ -36,12 +36,6 @@ def get_get_user_use_case(
         user_service_factory: Callable[[], UserService] = Depends(get_user_service_factory)
 ) -> GetUserUseCase:
     return GetUserUseCase(user_service_factory)
-
-
-def get_get_users_use_case(
-        user_service_factory: Callable[[], UserService] = Depends(get_user_service_factory)
-) -> GetUsersUseCase:
-    return GetUsersUseCase(user_service_factory)
 
 
 def get_delete_user_use_case(

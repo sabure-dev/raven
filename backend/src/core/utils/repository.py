@@ -19,10 +19,6 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def find_all(self) -> list[ModelType]:
-        raise NotImplementedError
-
-    @abstractmethod
     async def find_all_with_filters(
             self,
             filters: list | None = None,
@@ -60,11 +56,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
 
     async def find_one_by_id(self, item_id: int) -> Optional[ModelType]:
         return await self.find_one_by_field('id', item_id)
-
-    async def find_all(self) -> list[ModelType]:
-        query = select(self._model)
-        result = await self._session.execute(query)
-        return list(result.scalars().all())
 
     async def find_all_with_filters(
             self,

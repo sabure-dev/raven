@@ -1,11 +1,11 @@
-from typing import List, Annotated
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, status, Path, Body
 from pydantic import EmailStr
 
 from core.dependencies.users.use_cases import (
     get_create_user_use_case, get_verify_email_use_case,
-    get_get_user_use_case, get_get_users_use_case,
+    get_get_user_use_case,
     get_delete_user_use_case, get_update_user_email_use_case,
     get_update_user_username_use_case, get_request_password_reset_use_case,
     get_update_password_use_case, get_change_password_use_case,
@@ -23,15 +23,6 @@ router = APIRouter(
     prefix="/users",
     tags=["Users"],
 )
-
-
-@router.get("", response_model=List[UserOut], status_code=status.HTTP_200_OK)
-async def get_users(
-        *,
-        get_users_use_case=Depends(get_get_users_use_case),
-        _: User = Depends(get_current_superuser)
-):
-    return await get_users_use_case.execute(None)
 
 
 @router.get("/me", response_model=UserOut, status_code=status.HTTP_200_OK)
