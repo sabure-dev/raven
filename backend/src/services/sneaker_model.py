@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Any
 
 from sqlalchemy import or_, and_
 from sqlalchemy.exc import IntegrityError
@@ -19,10 +19,10 @@ class SneakerModelService:
         self.sneaker_model_repo = sneaker_model_factory()
 
     async def _handle_unique_violation(
-            self, error: IntegrityError, field: str, value: str
+            self, error: IntegrityError, fields: dict[str, Any],
     ):
         if "unique constraint" in str(error).lower():
-            raise ItemAlreadyExistsException("SneakerModel", field, value)
+            raise ItemAlreadyExistsException("SneakerModel", fields)
         raise
 
     async def create_sneaker_model(self, sneaker_model: SneakerModelCreate) -> int:
@@ -31,13 +31,14 @@ class SneakerModelService:
             sneaker_id = await self.sneaker_model_repo.create_one(sneaker_model_dict)
         except IntegrityError as e:
             if "name" in str(e).lower():
-                await self._handle_unique_violation(e, "name", sneaker_model.name)
+                await self._handle_unique_violation(e, {"name": sneaker_model.name})
             raise
 
         return sneaker_id
 
     async def get_sneakers_models_with_filters(
             self,
+            sneaker_model_id: int | None = None,
             name: str | None = None,
             brand: str | None = None,
             sneaker_model_type: str | None = None,
@@ -55,6 +56,8 @@ class SneakerModelService:
         options = []
         joins = {}
 
+        if sneaker_model_id:
+            filters.append(SneakerModel.id == sneaker_model_id)
         if name:
             filters.append(SneakerModel.name == name)
         if brand:
@@ -117,7 +120,8 @@ class SneakerModelService:
                 sneaker_model, update_values
             )
         except IntegrityError as e:
-            await self._handle_unique_violation(e, "name", update_sneaker_model.name)
+            if "name" in str(e).lower():
+                await self._handle_unique_violation(e, {"name": update_sneaker_model.name})
             raise
 
         return updated_sneaker_model

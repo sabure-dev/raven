@@ -6,7 +6,6 @@ from starlette import status
 from core.dependencies.users.security import get_current_superuser
 from core.dependencies.sneaker_model.use_cases import (
     get_create_sneaker_model_use_case,
-    get_get_sneaker_model_use_case,
     get_get_sneakers_models_use_case,
     get_update_sneaker_model_use_case,
     get_delete_sneaker_model_use_case,
@@ -20,7 +19,6 @@ from schemas.sneaker_model.sneaker_model import (
 )
 from schemas.sneaker_model.use_cases import (
     CreateSneakerModelInput,
-    GetSneakerModelInput,
     GetSneakersModelsInput,
     UpdateSneakerModelInput,
     DeleteSneakerModelInput,
@@ -44,21 +42,6 @@ async def create_sneaker_model(
         CreateSneakerModelInput(sneaker_model=sneaker_model_to_create)
     )
     return {"sneaker_model_id": sneaker_model_id}
-
-
-@router.get(
-    "/{sneaker_model_id}",
-    response_model=SneakerModelOut,
-    status_code=status.HTTP_200_OK,
-)
-async def get_sneaker_model_by_id(
-        sneaker_model_id: Annotated[int, Path(title="ID модели кроссовок")],
-        get_sneaker_model_use_case=Depends(get_get_sneaker_model_use_case),
-):
-    sneaker_model = await get_sneaker_model_use_case.execute(
-        GetSneakerModelInput(sneaker_model_id=sneaker_model_id)
-    )
-    return sneaker_model
 
 
 @router.get("", response_model=list[SneakerModelOut], status_code=status.HTTP_200_OK)

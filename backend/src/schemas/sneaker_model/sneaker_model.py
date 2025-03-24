@@ -29,6 +29,7 @@ class SneakerModelUpdate(BaseModel):
 
 
 class SneakerModelParams(BaseModel):
+    sneaker_model_id: int | None = None
     name: str | None = None
     brand: str | None = None
     sneaker_model_type: str | None = None

@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Any
 
 from pydantic import EmailStr
 from sqlalchemy.exc import IntegrityError
@@ -21,10 +21,10 @@ class UserService:
         self.user_repo = user_repo_factory()
 
     async def _handle_unique_violation(
-            self, error: IntegrityError, field: str, value: str
+            self, error: IntegrityError, fields: dict[str, Any],
     ):
         if "unique constraint" in str(error).lower():
-            raise ItemAlreadyExistsException("User", field, value)
+            raise ItemAlreadyExistsException("User", fields)
         raise
 
     async def create_user(self, user: UserCreate) -> (int, User):
@@ -35,9 +35,9 @@ class UserService:
             user_id = await self.user_repo.create_one(user_dict)
         except IntegrityError as e:
             if "email" in str(e).lower():
-                await self._handle_unique_violation(e, "email", user.email)
+                await self._handle_unique_violation(e, {"email": user.email})
             elif "username" in str(e).lower():
-                await self._handle_unique_violation(e, "username", user.username)
+                await self._handle_unique_violation(e, {"username": user.username})
             raise
 
         created_user = User(**user_dict)
@@ -87,7 +87,7 @@ class UserService:
                 {"email": new_email, "is_verified": False},
             )
         except IntegrityError as e:
-            await self._handle_unique_violation(e, "email", new_email)
+            await self._handle_unique_violation(e, {"email": new_email})
             raise
 
         return updated_user
@@ -100,7 +100,7 @@ class UserService:
                 {"username": new_username},
             )
         except IntegrityError as e:
-            await self._handle_unique_violation(e, "username", new_username)
+            await self._handle_unique_violation(e, {"username": new_username})
             raise
 
         return updated_user

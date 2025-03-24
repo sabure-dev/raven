@@ -48,7 +48,7 @@ class SneakerVariant(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    model_id: Mapped[int] = mapped_column(ForeignKey("sneaker_models.id"), index=True)
+    model_id: Mapped[int] = mapped_column(ForeignKey("sneaker_models.id", ondelete="CASCADE"), index=True)
     size: Mapped[float] = mapped_column(index=True)
     quantity: Mapped[int] = mapped_column(default=0)
 
@@ -58,6 +58,7 @@ class SneakerVariant(Base):
 
     __table_args__ = (
         CheckConstraint("quantity >= 0", name="check_sneaker_variant_quantity"),
+        UniqueConstraint('model_id', 'size', name='uq_model_size'),
     )
 
     def to_read_model(self) -> SneakerVariantOut:

@@ -5,7 +5,7 @@ from fastapi import Depends
 from core.dependencies.sneaker_model.database import (
     get_sneaker_model_repository_factory,
 )
-from repositories.sneakers import SneakerModelRepository
+from repositories.sneaker_model import SneakerModelRepository
 from services.sneaker_model import SneakerModelService
 
 

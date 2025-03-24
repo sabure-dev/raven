@@ -21,10 +21,6 @@ class GetSneakersModelsInput(BaseModelWithConfig):
     params: SneakerModelParams
 
 
-class GetSneakerModelInput(BaseModelWithConfig):
-    sneaker_model_id: int
-
-
 class UpdateSneakerModelInput(BaseModelWithConfig):
     sneaker_model_id: int
     update_sneaker_model: SneakerModelUpdate

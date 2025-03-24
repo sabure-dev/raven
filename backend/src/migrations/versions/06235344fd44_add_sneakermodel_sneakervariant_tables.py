@@ -1,8 +1,8 @@
 """add sneakermodel & sneakervariant tables
 
-Revision ID: ca8e6ff81671
+Revision ID: 06235344fd44
 Revises: e0263065a5a7
-Create Date: 2025-03-23 19:45:24.446045
+Create Date: 2025-03-24 21:55:06.091321
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'ca8e6ff81671'
+revision: str = '06235344fd44'
 down_revision: Union[str, None] = 'e0263065a5a7'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -39,8 +39,9 @@ def upgrade() -> None:
     sa.Column('size', sa.Float(), nullable=False),
     sa.Column('quantity', sa.Integer(), nullable=False),
     sa.CheckConstraint('quantity >= 0', name='check_sneaker_variant_quantity'),
-    sa.ForeignKeyConstraint(['model_id'], ['sneaker_models.id'], ),
-    sa.PrimaryKeyConstraint('id')
+                    sa.ForeignKeyConstraint(['model_id'], ['sneaker_models.id'], ondelete='CASCADE'),
+                    sa.PrimaryKeyConstraint('id'),
+                    sa.UniqueConstraint('model_id', 'size', name='uq_model_size')
     )
     op.create_index(op.f('ix_sneaker_variants_model_id'), 'sneaker_variants', ['model_id'], unique=False)
     op.create_index(op.f('ix_sneaker_variants_size'), 'sneaker_variants', ['size'], unique=False)

@@ -1,3 +1,5 @@
+from typing import Any
+
 from starlette import status
 
 
@@ -25,14 +27,23 @@ class ItemNotFoundException(BaseModelException):
 
 
 class ItemAlreadyExistsException(BaseModelException):
-    def __init__(self, item: str, field: str, value: str):
+    def __init__(self, item: str, fields: dict[str, Any]):
+        self.item = item
+        self.fields = fields
+
+        formatted_fields = self._format_fields(fields)
+
         super().__init__(
             status_code=status.HTTP_409_CONFLICT,
-            message=f"{item} with {field}={value} already exists",
+            message=f"{item} with {formatted_fields} already exists"
         )
-        self.item = item
-        self.field = field
-        self.value = value
+
+    def _format_fields(self, fields: dict) -> str:
+        """Format dict to string: 'field1=val1 and field2=val2'"""
+        field_strings = [f"{k}={v}" for k, v in fields.items()]
+        if len(field_strings) == 1:
+            return field_strings[0]
+        return ", ".join(field_strings[:-1]) + " and " + field_strings[-1]
 
 
 class NoDataProvidedException(BaseModelException):
