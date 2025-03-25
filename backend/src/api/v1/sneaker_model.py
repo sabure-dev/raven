@@ -30,7 +30,7 @@ router = APIRouter(
 )
 
 
-@router.post("", response_model=dict[str, int], status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=SneakerModelOut, status_code=status.HTTP_201_CREATED)
 async def create_sneaker_model(
         sneaker_model_to_create: Annotated[
             SneakerModelCreate, Body(title="Данные для создания модели кроссовок")
@@ -38,10 +38,10 @@ async def create_sneaker_model(
         create_sneaker_model_use_case=Depends(get_create_sneaker_model_use_case),
         _: User = Depends(get_current_superuser),
 ):
-    sneaker_model_id = await create_sneaker_model_use_case.execute(
+    sneaker_model = await create_sneaker_model_use_case.execute(
         CreateSneakerModelInput(sneaker_model=sneaker_model_to_create)
     )
-    return {"sneaker_model_id": sneaker_model_id}
+    return sneaker_model
 
 
 @router.get("", response_model=list[SneakerModelOut], status_code=status.HTTP_200_OK)

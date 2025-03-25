@@ -17,13 +17,13 @@ class BaseModelException(Exception):
 # Common exceptions
 class ItemNotFoundException(BaseModelException):
     def __init__(self, item: str, field: str, value: str):
+        self.item = item
+        self.field = field
+        self.value = value
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,
             message=f"{item} with {field}={value} not found",
         )
-        self.item = item
-        self.field = field
-        self.value = value
 
 
 class ItemAlreadyExistsException(BaseModelException):

@@ -55,15 +55,15 @@ async def get_user_by_id(
     return user
 
 
-@router.post("", response_model=dict[str, int], status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 async def create_user(
         user_to_create: Annotated[
             UserCreate, Body(title="Данные для создания пользователя")
         ],
         create_user_use_case=Depends(get_create_user_use_case),
 ):
-    user_id = await create_user_use_case.execute(CreateUserInput(user=user_to_create))
-    return {"user_id": user_id}
+    user = await create_user_use_case.execute(CreateUserInput(user=user_to_create))
+    return user
 
 
 @router.post("/verify/{token}", status_code=status.HTTP_200_OK)

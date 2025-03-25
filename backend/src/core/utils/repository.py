@@ -11,7 +11,7 @@ ModelType = TypeVar("ModelType", bound=Base)
 
 class AbstractRepository(ABC):
     @abstractmethod
-    async def create_one(self, data: dict) -> int:
+    async def create_one(self, data: dict) -> ModelType:
         raise NotImplementedError
 
     @abstractmethod
@@ -37,6 +37,14 @@ class AbstractRepository(ABC):
     async def update_one(self, item_id: int, data: dict) -> ModelType:
         raise NotImplementedError
 
+    @abstractmethod
+    async def increment_field(
+            self,
+            item_id: int,
+            field: str,
+            delta: int) -> ModelType:
+        raise NotImplementedError
+
 
 class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
     def __init__(self, model: Type[ModelType], session: AsyncSession):
@@ -44,8 +52,8 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         self._session = session
 
     # Транзакции можно будет расписать на уровне сервисов, а тут юзать flush вместо commit! (но нужно будет прокинуть сессию)
-    async def create_one(self, data: dict) -> int:
-        stmt = insert(self._model).values(**data).returning(self._model.id)
+    async def create_one(self, data: dict) -> ModelType:
+        stmt = insert(self._model).values(**data).returning(self._model)
         result = await self._session.execute(stmt)
         await self._session.commit()
         return result.scalar_one()
@@ -98,6 +106,28 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
             .values(**data)
             .returning(self._model)
         )
+        result = await self._session.execute(stmt)
+        updated_item = result.scalar_one()
+        await self._session.commit()
+        return updated_item
+
+    async def increment_field(
+            self,
+            item_id: int,
+            field: str,
+            delta: int
+    ) -> ModelType:
+        model_field = getattr(self._model, field)
+        new_value = model_field + delta
+        where_condition = and_(self._model.id == item_id, new_value >= 0)
+
+        stmt = (
+            update(self._model)
+            .where(where_condition)
+            .values({field: new_value})
+            .returning(self._model)
+        )
+
         result = await self._session.execute(stmt)
         updated_item = result.scalar_one()
         await self._session.commit()

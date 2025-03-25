@@ -16,25 +16,23 @@ from core.exceptions import (
 
 class SneakerModelService:
     def __init__(self, sneaker_model_factory: Callable[[], AbstractRepository]):
-        self.sneaker_model_repo = sneaker_model_factory()
+        self._sneaker_model_repo = sneaker_model_factory()
 
     async def _handle_unique_violation(
-            self, error: IntegrityError, fields: dict[str, Any],
+            self, fields: dict[str, Any],
     ):
-        if "unique constraint" in str(error).lower():
-            raise ItemAlreadyExistsException("SneakerModel", fields)
-        raise
+        raise ItemAlreadyExistsException("SneakerModel", fields)
 
-    async def create_sneaker_model(self, sneaker_model: SneakerModelCreate) -> int:
+    async def create_sneaker_model(self, sneaker_model: SneakerModelCreate) -> SneakerModel:
         sneaker_model_dict = sneaker_model.model_dump()
         try:
-            sneaker_id = await self.sneaker_model_repo.create_one(sneaker_model_dict)
+            sneaker = await self._sneaker_model_repo.create_one(sneaker_model_dict)
         except IntegrityError as e:
-            if "name" in str(e).lower():
-                await self._handle_unique_violation(e, {"name": sneaker_model.name})
+            if "unique constraint" in str(e).lower():
+                await self._handle_unique_violation({"name": sneaker_model.name})
             raise
 
-        return sneaker_id
+        return sneaker
 
     async def get_sneakers_models_with_filters(
             self,
@@ -95,7 +93,7 @@ class SneakerModelService:
         if include_variants:
             options.append(joinedload(SneakerModel.variants))
 
-        return await self.sneaker_model_repo.find_all_with_filters(
+        return await self._sneaker_model_repo.find_all_with_filters(
             filters=filters, joins=joins, options=options, offset=offset, limit=limit
         )
 
@@ -108,7 +106,7 @@ class SneakerModelService:
             raise NoDataProvidedException()
 
         try:
-            updated_sneaker_model = await self.sneaker_model_repo.update_one(
+            updated_sneaker_model = await self._sneaker_model_repo.update_one(
                 sneaker_model_id, update_values
             )
         except IntegrityError as e:
@@ -119,6 +117,6 @@ class SneakerModelService:
         return updated_sneaker_model
 
     async def delete_sneaker_model(self, sneaker_model_id: int) -> None:
-        success = await self.sneaker_model_repo.delete_one(sneaker_model_id)
+        success = await self._sneaker_model_repo.delete_one(sneaker_model_id)
         if not success:
             raise ItemNotFoundException("SneakerModel", "id", str(sneaker_model_id))

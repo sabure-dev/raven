@@ -21,29 +21,25 @@ class UserService:
         self._user_repo = user_repo_factory()
 
     async def _handle_unique_violation(
-            self, error: IntegrityError, fields: dict[str, Any],
+            self, fields: dict[str, Any],
     ):
-        if "unique constraint" in str(error).lower():
-            raise ItemAlreadyExistsException("User", fields)
-        raise
+        raise ItemAlreadyExistsException("User", fields)
 
-    async def create_user(self, user: UserCreate) -> (int, User):
+    async def create_user(self, user: UserCreate) -> User:
         user_dict = user.model_dump()
         user_dict["password"] = get_password_hash(user_dict["password"])
 
         try:
-            user_id = await self._user_repo.create_one(user_dict)
+            created_user = await self._user_repo.create_one(user_dict)
         except IntegrityError as e:
-            if "email" in str(e).lower():
-                await self._handle_unique_violation(e, {"email": user.email})
-            elif "username" in str(e).lower():
-                await self._handle_unique_violation(e, {"username": user.username})
+            if "unique constraint" in str(e).lower():
+                if "email" in str(e).lower():
+                    await self._handle_unique_violation({"email": user.email})
+                elif "username" in str(e).lower():
+                    await self._handle_unique_violation({"username": user.username})
             raise
 
-        created_user = User(**user_dict)
-        created_user.id = user_id
-
-        return user_id, created_user
+        return created_user
 
     async def get_user_by_email(self, email: EmailStr) -> User:
         user = await self._user_repo.find_one_by_field(email=email)
