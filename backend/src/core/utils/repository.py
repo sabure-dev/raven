@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, Type, Optional
+from typing import TypeVar, Generic, Type, Optional, Any
 
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, update, true, delete, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.session.base import Base
@@ -15,10 +15,6 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def find_one_by_id(self, item_id: int) -> Optional[ModelType]:
-        raise NotImplementedError
-
-    @abstractmethod
     async def find_all_with_filters(
             self,
             filters: list | None = None,
@@ -30,15 +26,15 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete_one(self, item: ModelType) -> None:
+    async def delete_one(self, item_id: int) -> bool:
         raise NotImplementedError
 
     @abstractmethod
-    async def find_one_by_field(self, field: str, value: any) -> Optional[ModelType]:
+    async def find_one_by_field(self, **filters: Any) -> Optional[ModelType]:
         raise NotImplementedError
 
     @abstractmethod
-    async def update_one(self, item: ModelType, data: dict) -> ModelType:
+    async def update_one(self, item_id: int, data: dict) -> ModelType:
         raise NotImplementedError
 
 
@@ -47,15 +43,12 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         self._model = model
         self._session = session
 
+    # Транзакции можно будет расписать на уровне сервисов, а тут юзать flush вместо commit! (но нужно будет прокинуть сессию)
     async def create_one(self, data: dict) -> int:
-        instance = self._model(**data)
-        self._session.add(instance)
+        stmt = insert(self._model).values(**data).returning(self._model.id)
+        result = await self._session.execute(stmt)
         await self._session.commit()
-        await self._session.refresh(instance)
-        return instance.id
-
-    async def find_one_by_id(self, item_id: int) -> Optional[ModelType]:
-        return await self.find_one_by_field("id", item_id)
+        return result.scalar_one()
 
     async def find_all_with_filters(
             self,
@@ -67,12 +60,11 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
     ) -> list[ModelType]:
         query = select(self._model)
         if joins:
-            for relation, condition in joins.items():
-                if condition is True:
-                    query = query.join(getattr(self._model, relation))
-                else:
-                    query = query.join(getattr(self._model, relation)).where(condition)
-
+            for relation, on_condition in joins.items():
+                query = query.join(
+                    getattr(self._model, relation),
+                    onclause=on_condition if on_condition is not None else true()
+                )
         if filters:
             query = query.where(and_(*filters))
 
@@ -80,28 +72,33 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
             for option in options:
                 query = query.options(option)
 
-        if offset:
+        if offset is not None:
             query = query.offset(offset)
-        if limit:
+        if limit is not None:
             query = query.limit(limit)
 
-        query = query.distinct()
-
         result = await self._session.execute(query)
-        return list(result.unique().scalars().all())
+        return list(result.scalars().unique().all())
 
-    async def delete_one(self, item: ModelType) -> None:
-        await self._session.delete(item)
+    async def delete_one(self, item_id: int) -> bool:
+        stmt = delete(self._model).where(self._model.id == item_id)
+        result = await self._session.execute(stmt)
         await self._session.commit()
+        return result.rowcount > 0
 
-    async def find_one_by_field(self, field: str, value: any) -> Optional[ModelType]:
-        query = select(self._model).where(getattr(self._model, field) == value)
+    async def find_one_by_field(self, **filters: Any) -> Optional[ModelType]:
+        query = select(self._model).filter_by(**filters)
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
 
-    async def update_one(self, item: ModelType, data: dict) -> ModelType:
-        for key, value in data.items():
-            setattr(item, key, value)
+    async def update_one(self, item_id: int, data: dict) -> ModelType:
+        stmt = (
+            update(self._model)
+            .where(self._model.id == item_id)
+            .values(**data)
+            .returning(self._model)
+        )
+        result = await self._session.execute(stmt)
+        updated_item = result.scalar_one()
         await self._session.commit()
-        await self._session.refresh(item)
-        return item
+        return updated_item

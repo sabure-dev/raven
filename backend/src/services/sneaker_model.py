@@ -99,17 +99,9 @@ class SneakerModelService:
             filters=filters, joins=joins, options=options, offset=offset, limit=limit
         )
 
-    async def get_sneaker_model_by_id(self, sneaker_model_id: int) -> SneakerModel:
-        sneaker_model = await self.sneaker_model_repo.find_one_by_id(sneaker_model_id)
-        if not sneaker_model:
-            raise ItemNotFoundException("SneakerModel", "id", str(sneaker_model_id))
-        return sneaker_model
-
     async def update_sneaker_model(
             self, sneaker_model_id: int, update_sneaker_model: SneakerModelUpdate
     ) -> SneakerModel:
-        sneaker_model = await self.get_sneaker_model_by_id(sneaker_model_id)
-
         update_values = update_sneaker_model.model_dump(exclude_unset=True)
 
         if not update_values:
@@ -117,7 +109,7 @@ class SneakerModelService:
 
         try:
             updated_sneaker_model = await self.sneaker_model_repo.update_one(
-                sneaker_model, update_values
+                sneaker_model_id, update_values
             )
         except IntegrityError as e:
             if "name" in str(e).lower():
@@ -127,5 +119,6 @@ class SneakerModelService:
         return updated_sneaker_model
 
     async def delete_sneaker_model(self, sneaker_model_id: int) -> None:
-        user = await self.get_sneaker_model_by_id(sneaker_model_id)
-        await self.sneaker_model_repo.delete_one(user)
+        success = await self.sneaker_model_repo.delete_one(sneaker_model_id)
+        if not success:
+            raise ItemNotFoundException("SneakerModel", "id", str(sneaker_model_id))

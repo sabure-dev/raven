@@ -51,7 +51,7 @@ class UpdatePasswordUseCase(BaseUseCase[UpdatePasswordInput, None]):
 
         user = await self.user_service.get_verified_user_by_email(username)
 
-        await self.user_service.update_user_password(user, input_data.new_password)
+        await self.user_service.update_user_password(user.id, input_data.new_password)
 
 
 class ChangePasswordUseCase(BaseUseCase[ChangePasswordInput, None]):
