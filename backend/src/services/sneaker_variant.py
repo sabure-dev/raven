@@ -1,6 +1,5 @@
 from typing import Callable, Any
 
-from asyncpg import ForeignKeyViolationError
 from sqlalchemy.exc import IntegrityError
 
 from core.exceptions import ItemAlreadyExistsException, ItemNotFoundException

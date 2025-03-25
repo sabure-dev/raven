@@ -110,8 +110,8 @@ class SneakerModelService:
                 sneaker_model_id, update_values
             )
         except IntegrityError as e:
-            if "name" in str(e).lower():
-                await self._handle_unique_violation(e, {"name": update_sneaker_model.name})
+            if "unique constraint" in str(e).lower():
+                await self._handle_unique_violation({"name": update_sneaker_model.name})
             raise
 
         return updated_sneaker_model

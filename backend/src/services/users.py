@@ -83,7 +83,8 @@ class UserService:
                 {"email": new_email, "is_verified": False},
             )
         except IntegrityError as e:
-            await self._handle_unique_violation(e, {"email": new_email})
+            if "unique constraint" in str(e).lower():
+                await self._handle_unique_violation({"email": new_email})
             raise
 
         return updated_user
@@ -95,7 +96,8 @@ class UserService:
                 {"username": new_username},
             )
         except IntegrityError as e:
-            await self._handle_unique_violation(e, {"username": new_username})
+            if "unique constraint" in str(e).lower():
+                await self._handle_unique_violation({"username": new_username})
             raise
 
         return updated_user
