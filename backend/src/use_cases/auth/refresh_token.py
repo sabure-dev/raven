@@ -1,6 +1,6 @@
 from typing import Callable
 
-from schemas.auth import TokenResponse, RefreshTokenRequest
+from schemas.auth.auth import TokenResponse, RefreshTokenRequest
 from services.auth import AuthService
 from use_cases.base import BaseUseCase
 

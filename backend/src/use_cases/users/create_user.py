@@ -2,14 +2,15 @@ from typing import Callable
 
 from fastapi import BackgroundTasks
 
-from schemas.use_cases import CreateUserInput
+from schemas.users.use_cases import CreateUserInput
+from schemas.users.users import UserOut
 from services.email import EmailService
 from services.jwt import TokenService
 from services.users import UserService
 from use_cases.base import BaseUseCase
 
 
-class CreateUserUseCase(BaseUseCase[CreateUserInput, int]):
+class CreateUserUseCase(BaseUseCase[CreateUserInput, UserOut]):
     def __init__(
             self,
             user_service_factory: Callable[[], UserService],
@@ -22,15 +23,13 @@ class CreateUserUseCase(BaseUseCase[CreateUserInput, int]):
         self.email_service = email_service_factory()
         self.background_tasks = background_tasks
 
-    async def execute(self, input_data: CreateUserInput) -> int:
-        user_id, user = await self.user_service.create_user(input_data.user)
+    async def execute(self, input_data: CreateUserInput) -> UserOut:
+        user = await self.user_service.create_user(input_data.user)
 
         token = await self.token_service.create_verification_token(user)
 
         self.background_tasks.add_task(
-            self.email_service.send_verification_email,
-            input_data.user.email,
-            token
+            self.email_service.send_verification_email, input_data.user.email, token
         )
 
-        return user_id
+        return user.to_read_model()

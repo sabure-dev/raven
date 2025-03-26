@@ -10,6 +10,7 @@ from alembic import context
 from core.config.config import settings
 from db.session.base import Base
 from db.models.users import User
+from db.models.sneakers import SneakerModel, SneakerVariant
 
 config = context.config
 config.set_main_option("sqlalchemy.url", f'postgresql+asyncpg://\
