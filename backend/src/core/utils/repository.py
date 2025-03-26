@@ -66,7 +66,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
             offset: int | None = None,
             limit: int | None = None,
     ) -> list[ModelType]:
-        query = select(self._model).distinct()
+        query = select(self._model)
         if joins:
             for relation, condition in joins.items():
                 if condition is True:
