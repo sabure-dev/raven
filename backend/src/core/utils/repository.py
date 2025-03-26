@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Type, Optional, Any
 
-from sqlalchemy import select, and_, update, true, delete, insert
+from sqlalchemy import select, and_, update, delete, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.session.base import Base
@@ -42,7 +42,7 @@ class AbstractRepository(ABC):
             self,
             item_id: int,
             field: str,
-            delta: int) -> ModelType:
+            delta: int) -> ModelType | None:
         raise NotImplementedError
 
 
@@ -66,13 +66,14 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
             offset: int | None = None,
             limit: int | None = None,
     ) -> list[ModelType]:
-        query = select(self._model)
+        query = select(self._model).distinct()
         if joins:
-            for relation, on_condition in joins.items():
-                query = query.join(
-                    getattr(self._model, relation),
-                    onclause=on_condition if on_condition is not None else true()
-                )
+            for relation, condition in joins.items():
+                if condition is True:
+                    query = query.join(getattr(self._model, relation))
+                else:
+                    query = query.join(getattr(self._model, relation)).where(condition)
+
         if filters:
             query = query.where(and_(*filters))
 
@@ -86,7 +87,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
             query = query.limit(limit)
 
         result = await self._session.execute(query)
-        return list(result.scalars().unique().all())
+        return list(result.unique().scalars().all())
 
     async def delete_one(self, item_id: int) -> bool:
         stmt = delete(self._model).where(self._model.id == item_id)
@@ -116,7 +117,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
             item_id: int,
             field: str,
             delta: int
-    ) -> ModelType:
+    ) -> ModelType | None:
         model_field = getattr(self._model, field)
         new_value = model_field + delta
         where_condition = and_(self._model.id == item_id, new_value >= 0)
@@ -129,6 +130,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         )
 
         result = await self._session.execute(stmt)
-        updated_item = result.scalar_one()
+        updated_item = result.scalar_one_or_none()
         await self._session.commit()
         return updated_item

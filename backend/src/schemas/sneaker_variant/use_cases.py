@@ -11,3 +11,12 @@ class BaseModelWithConfig(BaseModel):
 
 class CreateSneakerVariantInput(BaseModelWithConfig):
     sneaker_variant: SneakerVariantCreate
+
+
+class UpdateSneakerVariantQuantityInput(BaseModelWithConfig):
+    sneaker_variant_id: int
+    quantity_delta: int
+
+
+class DeleteSneakerVariantInput(BaseModelWithConfig):
+    sneaker_variant_id: int

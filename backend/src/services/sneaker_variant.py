@@ -2,7 +2,7 @@ from typing import Callable, Any
 
 from sqlalchemy.exc import IntegrityError
 
-from core.exceptions import ItemAlreadyExistsException, ItemNotFoundException
+from core.exceptions import ItemAlreadyExistsException, ItemNotFoundException, InvalidFieldValueException
 from core.utils.repository import AbstractRepository
 from db.models.sneakers import SneakerVariant
 from schemas.sneaker_variant.sneaker_variant import SneakerVariantCreate
@@ -38,16 +38,16 @@ class SneakerVariantService:
             raise
         return sneaker_variant_id
 
-    async def delete_sneaker_variant(self, sneaker_variant_id: int) -> None:
-        success = await self._sneaker_variant_repo.delete_one(sneaker_variant_id)
-        if not success:
-            raise ItemNotFoundException("SneakerVariant", "id", str(sneaker_variant_id))
-
-    async def update_quantity_by_delta_sneaker_variant(self, sneaker_variant_id: int, delta: int) -> SneakerVariant:
+    async def update_quantity_by_delta(self, sneaker_variant_id: int, delta: int) -> SneakerVariant:
         updated_sneaker_variant = await self._sneaker_variant_repo.increment_field(
             sneaker_variant_id,
             "quantity",
             delta)
         if updated_sneaker_variant is None:
-            raise ValueError("sneaker_variant quantity can't be negative")
+            raise InvalidFieldValueException("quantity", "non-negative number or item not found")
         return updated_sneaker_variant
+
+    async def delete_sneaker_variant(self, sneaker_variant_id: int) -> None:
+        success = await self._sneaker_variant_repo.delete_one(sneaker_variant_id)
+        if not success:
+            raise ItemNotFoundException("SneakerVariant", "id", str(sneaker_variant_id))

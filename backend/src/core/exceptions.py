@@ -90,6 +90,16 @@ class InvalidCredentialsException(BaseModelException):
         )
 
 
+class InvalidFieldValueException(BaseModelException):
+    def __init__(self, field: str, constraint: str = "non-negative number"):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            message=f"Field '{field}' cannot accept given value: must be {constraint}"
+        )
+        self.field = field
+        self.constraint = constraint
+
+
 # Token exceptions
 class TokenExpiredException(BaseModelException):
     def __init__(self):
