@@ -15,7 +15,7 @@ class SneakerModel(Base):
     brand: Mapped[str] = mapped_column(index=True)
     type: Mapped[str] = mapped_column(index=True)
     description: Mapped[str] = mapped_column()
-    price: Mapped[float] = mapped_column(Float(precision=4), default=0)
+    price: Mapped[float] = mapped_column(Float(precision=4), default=0.0)
 
     variants: Mapped[list["SneakerVariant"]] = relationship(
         "SneakerVariant",
