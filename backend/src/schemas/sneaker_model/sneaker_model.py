@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 from schemas.sneaker_variant.sneaker_variant import SneakerVariantOut
@@ -41,3 +43,4 @@ class SneakerModelParams(BaseModel):
     in_stock: bool | None = None
     offset: int | None = None
     limit: int | None = None
+    sort_by_price: Literal["asc", "desc"] | None = None

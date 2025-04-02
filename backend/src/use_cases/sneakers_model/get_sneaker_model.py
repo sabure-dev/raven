@@ -30,6 +30,7 @@ class GetSneakersModelsUseCase(BaseUseCase[None, List[SneakerModelOut]]):
                 in_stock=input_data.params.in_stock,
                 offset=input_data.params.offset,
                 limit=input_data.params.limit,
+                sort_by_price=input_data.params.sort_by_price,
             )
         )
         return [

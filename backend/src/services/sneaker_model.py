@@ -1,17 +1,17 @@
-from typing import Callable, Any
+from typing import Callable, Any, Literal
 
 from sqlalchemy import or_, and_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
-from core.utils.repository import AbstractRepository
-from db.models.sneakers import SneakerModel, SneakerVariant
-from schemas.sneaker_model.sneaker_model import SneakerModelCreate, SneakerModelUpdate
 from core.exceptions import (
     ItemAlreadyExistsException,
     ItemNotFoundException,
     NoDataProvidedException,
 )
+from core.utils.repository import AbstractRepository
+from db.models.sneakers import SneakerModel, SneakerVariant
+from schemas.sneaker_model.sneaker_model import SneakerModelCreate, SneakerModelUpdate
 
 
 class SneakerModelService:
@@ -48,6 +48,7 @@ class SneakerModelService:
             in_stock: bool | None = None,
             offset: int | None = None,
             limit: int | None = None,
+            sort_by_price: Literal["asc", "desc"] | None = None,
     ) -> list[SneakerModel]:
         filters = []
         variant_filters = []
@@ -94,7 +95,12 @@ class SneakerModelService:
             options.append(joinedload(SneakerModel.variants))
 
         return await self._sneaker_model_repo.find_all_with_filters(
-            filters=filters, joins=joins, options=options, offset=offset, limit=limit
+            filters=filters,
+            joins=joins,
+            options=options,
+            offset=offset,
+            limit=limit,
+            order_by=("price", sort_by_price) if sort_by_price else None,
         )
 
     async def update_sneaker_model(

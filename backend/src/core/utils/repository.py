@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, Type, Optional, Any
+from typing import TypeVar, Generic, Type, Optional, Any, Literal
 
 from sqlalchemy import select, and_, update, delete, insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.session.base import Base
 
 ModelType = TypeVar("ModelType", bound=Base)
+OrderByType = tuple[str, Literal["asc", "desc"]]
 
 
 class AbstractRepository(ABC):
@@ -22,6 +23,7 @@ class AbstractRepository(ABC):
             options: list | None = None,
             offset: int | None = None,
             limit: int | None = None,
+            order_by: OrderByType | None = None
     ) -> list[ModelType]:
         raise NotImplementedError
 
@@ -65,6 +67,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
             options: list | None = None,
             offset: int | None = None,
             limit: int | None = None,
+            order_by: OrderByType | None = None,
     ) -> list[ModelType]:
         query = select(self._model)
         if joins:
@@ -76,6 +79,16 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
 
         if filters:
             query = query.where(and_(*filters))
+
+        if order_by:
+            field, direction = order_by
+            field = getattr(self._model, field)
+            if direction == "asc":
+                query = query.order_by(field.asc())
+            else:
+                query = query.order_by(field.desc())
+        else:
+            query = query.order_by(self._model.id.desc())
 
         if options:
             for option in options:

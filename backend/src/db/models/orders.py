@@ -28,7 +28,7 @@ class Order(Base):
 
     user: Mapped["User"] = relationship(back_populates="orders")
     items: Mapped[list["OrderItem"]] = relationship(
-        back_populates="orders",
+        back_populates="order",
         cascade="all, delete-orphan",
         lazy="raise"
     )
@@ -47,7 +47,6 @@ class OrderItem(Base):
     price_at_time: Mapped[float] = mapped_column(Float(precision=10), default=0.0)
 
     order: Mapped["Order"] = relationship(back_populates="items")
-    variant: Mapped["SneakerVariant"] = relationship()
 
     __table_args__ = (
         CheckConstraint("quantity > 0", name="check_order_item_quantity"),
