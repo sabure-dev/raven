@@ -1,22 +1,45 @@
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from typing import AsyncGenerator
+
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 from core.config.config import settings
 
-engine = create_async_engine(
-    f"postgresql+asyncpg://\
-{settings.db_settings.DB_USER}:\
-{settings.db_settings.DB_PASSWORD}@\
-{settings.db_settings.DB_HOST}:\
-{settings.db_settings.DB_PORT}/\
-{settings.db_settings.DB_NAME}"
+
+class DatabaseHelper:
+    def __init__(self, url, echo, pool_size, max_overflow):
+        self.engine = create_async_engine(
+            url=url,
+            echo=echo,
+            pool_size=pool_size,
+            max_overflow=max_overflow,
+        )
+        self.async_session_maker = async_sessionmaker(
+            self.engine,
+            expire_on_commit=False,
+            autoflush=False,
+        )
+
+    async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
+        async with self.async_session_maker() as session:
+            try:
+                yield session
+            finally:
+                await session.close()
+
+
+db_helper = DatabaseHelper(
+    url=f"postgresql+asyncpg://"
+        f"{settings.db_settings.DB_USER}:"
+        f"{settings.db_settings.DB_PASSWORD}@"
+        f"{settings.db_settings.DB_HOST}:"
+        f"{settings.db_settings.DB_PORT}/"
+        f"{settings.db_settings.DB_NAME}",
+    echo=False,
+    pool_size=20,
+    max_overflow=10,
 )
 
-async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
-
-async def get_async_session():
-    async with async_session_maker() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    async for session in db_helper.get_session():
+        yield session
