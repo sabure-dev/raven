@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from pydantic import EmailStr
-from sqlalchemy import String, DateTime, func, Float, CheckConstraint, UniqueConstraint
+from sqlalchemy import String, DateTime, func, CheckConstraint, UniqueConstraint
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from db.session.base import Base
@@ -16,7 +16,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(25), index=True)
     email: Mapped[EmailStr] = mapped_column(String(100), index=True)
     password: Mapped[str] = mapped_column(String(100))
-    balance: Mapped[float] = mapped_column(Float(precision=4), default=0.0)
+    balance: Mapped[float] = mapped_column(default=0.0)
 
     orders: Mapped[list["Order"]] = relationship(
         "Order",

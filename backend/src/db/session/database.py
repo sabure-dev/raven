@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
@@ -19,10 +20,15 @@ class DatabaseHelper:
             autoflush=False,
         )
 
+    @asynccontextmanager
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
         async with self.async_session_maker() as session:
             try:
-                yield session
+                async with session.begin():
+                    yield session
+            except Exception:
+                await session.rollback()
+                raise
             finally:
                 await session.close()
 
@@ -41,5 +47,5 @@ db_helper = DatabaseHelper(
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
-    async for session in db_helper.get_session():
+    async with db_helper.get_session() as session:
         yield session

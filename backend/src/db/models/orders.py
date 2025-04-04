@@ -1,18 +1,10 @@
 from datetime import datetime
-from enum import Enum as PyEnum
 
-from sqlalchemy import ForeignKey, DateTime, func, Enum, Float, CheckConstraint
+from sqlalchemy import ForeignKey, DateTime, func, Enum, CheckConstraint
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from db.session.base import Base
-
-
-class OrderStatus(PyEnum):
-    PENDING = "pending"
-    PROCESSING = "processing"
-    SHIPPED = "shipped"
-    DELIVERED = "delivered"
-    CANCELLED = "cancelled"
+from schemas.orders.orders import OrderStatus, OrderOut, OrderItemOut
 
 
 class Order(Base):
@@ -24,7 +16,7 @@ class Order(Base):
         DateTime(timezone=True), server_default=func.now()
     )
     status: Mapped[OrderStatus] = mapped_column(Enum(OrderStatus), default=OrderStatus.PENDING)
-    total_amount: Mapped[float] = mapped_column(Float(precision=4), default=0.0)
+    total_amount: Mapped[float] = mapped_column(default=0.0)
 
     user: Mapped["User"] = relationship(back_populates="orders")
     items: Mapped[list["OrderItem"]] = relationship(
@@ -37,6 +29,16 @@ class Order(Base):
         CheckConstraint("total_amount >= 0", name="check_order_total_amount"),
     )
 
+    def to_read_model(self) -> OrderOut:
+        return OrderOut(
+            id=self.id,
+            user_id=self.user_id,
+            order_date=self.order_date,
+            items=[item.to_read_model() for item in self.items],
+            status=self.status,
+            total_amount=self.total_amount,
+        )
+
 
 class OrderItem(Base):
     __tablename__ = "order_items"
@@ -44,7 +46,7 @@ class OrderItem(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
     quantity: Mapped[int] = mapped_column(default=1)
-    price_at_time: Mapped[float] = mapped_column(Float(precision=10), default=0.0)
+    price_at_time: Mapped[float] = mapped_column(default=0.0)
 
     order: Mapped["Order"] = relationship(back_populates="items")
 
@@ -52,3 +54,11 @@ class OrderItem(Base):
         CheckConstraint("quantity > 0", name="check_order_item_quantity"),
         CheckConstraint("price_at_time >= 0", name="check_order_item_price"),
     )
+
+    def to_read_model(self) -> OrderItemOut:
+        return OrderItemOut(
+            id=self.id,
+            order_id=self.order_id,
+            quantity=self.quantity,
+            price_at_time=self.price_at_time,
+        )

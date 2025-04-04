@@ -31,6 +31,7 @@ class UserService:
 
         try:
             created_user = await self._user_repo.create_one(user_dict)
+            return created_user
         except IntegrityError as e:
             if "unique constraint" in str(e).lower():
                 if "email" in str(e).lower():
@@ -38,8 +39,6 @@ class UserService:
                 elif "username" in str(e).lower():
                     await self._handle_unique_violation({"username": user.username})
             raise
-
-        return created_user
 
     async def get_user_by_email(self, email: EmailStr) -> User:
         user = await self._user_repo.find_one_by_field(email=email)

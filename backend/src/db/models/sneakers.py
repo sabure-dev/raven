@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, CheckConstraint, Float, UniqueConstraint
+from sqlalchemy import ForeignKey, CheckConstraint, UniqueConstraint
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from db.session.base import Base
@@ -15,7 +15,7 @@ class SneakerModel(Base):
     brand: Mapped[str] = mapped_column(index=True)
     type: Mapped[str] = mapped_column(index=True)
     description: Mapped[str] = mapped_column()
-    price: Mapped[float] = mapped_column(Float(precision=4), default=0.0)
+    price: Mapped[float] = mapped_column(default=0.0)
 
     variants: Mapped[list["SneakerVariant"]] = relationship(
         "SneakerVariant",

@@ -53,11 +53,9 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         self._model = model
         self._session = session
 
-    # Транзакции можно будет расписать на уровне сервисов, а тут юзать flush вместо commit! (но нужно будет прокинуть сессию)
     async def create_one(self, data: dict) -> ModelType:
         stmt = insert(self._model).values(**data).returning(self._model)
         result = await self._session.execute(stmt)
-        await self._session.commit()
         return result.scalar_one()
 
     async def find_all_with_filters(
@@ -121,9 +119,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
             .returning(self._model)
         )
         result = await self._session.execute(stmt)
-        updated_item = result.scalar_one()
-        await self._session.commit()
-        return updated_item
+        return result.scalar_one()
 
     async def increment_field(
             self,
@@ -143,6 +139,4 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         )
 
         result = await self._session.execute(stmt)
-        updated_item = result.scalar_one_or_none()
-        await self._session.commit()
-        return updated_item
+        return result.scalar_one_or_none()
