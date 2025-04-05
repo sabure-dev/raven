@@ -29,12 +29,12 @@ class Order(Base):
         CheckConstraint("total_amount >= 0", name="check_order_total_amount"),
     )
 
-    def to_read_model(self) -> OrderOut:
+    def to_read_model(self, include_items: bool = False) -> OrderOut:
         return OrderOut(
             id=self.id,
             user_id=self.user_id,
             order_date=self.order_date,
-            items=[item.to_read_model() for item in self.items],
+            items=[item.to_read_model() for item in self.items] if include_items and self.items is not None else None,
             status=self.status,
             total_amount=self.total_amount,
         )
@@ -47,7 +47,9 @@ class OrderItem(Base):
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
     quantity: Mapped[int] = mapped_column(default=1)
     price_at_time: Mapped[float] = mapped_column(default=0.0)
+    sneaker_variant_id: Mapped[int] = mapped_column(ForeignKey("sneaker_variants.id", ondelete="RESTRICT"))
 
+    sneaker_variant: Mapped["SneakerVariant"] = relationship(lazy="raise")
     order: Mapped["Order"] = relationship(back_populates="items")
 
     __table_args__ = (
@@ -55,10 +57,12 @@ class OrderItem(Base):
         CheckConstraint("price_at_time >= 0", name="check_order_item_price"),
     )
 
-    def to_read_model(self) -> OrderItemOut:
+    def to_read_model(self, include_sneaker_variant: bool = False) -> OrderItemOut:
         return OrderItemOut(
             id=self.id,
             order_id=self.order_id,
             quantity=self.quantity,
+            sneaker_variant_id=self.sneaker_variant_id,
             price_at_time=self.price_at_time,
+            sneaker_variant=self.sneaker_variant if include_sneaker_variant and self.sneaker_variant is not None else None,
         )

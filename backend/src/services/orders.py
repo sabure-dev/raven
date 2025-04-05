@@ -1,5 +1,7 @@
 from typing import Callable
 
+from sqlalchemy.orm import selectinload
+
 from core.utils.repository import AbstractRepository
 from db.models.orders import Order
 from schemas.orders.orders import OrderCreate
@@ -9,9 +11,14 @@ class OrderService:
     def __init__(self, order_repo_factory: Callable[[], AbstractRepository]):
         self.order_repo = order_repo_factory()
 
-    async def create_order(self, order: OrderCreate) -> Order:
+    async def create_order(self, order: OrderCreate, user_id: int) -> Order:
         order_dict = order.model_dump()
+        order_dict['user_id'] = user_id
         order = await self.order_repo.create_one(order_dict)
+        # order = await self.order_repo.find_all_with_filters(
+        #     filters=[Order.id == order.id],
+        #     options=[selectinload(Order.items)]
+        # )
         return order
 
     async def cancel_order(self):

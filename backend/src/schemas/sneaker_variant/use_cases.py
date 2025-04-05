@@ -9,6 +9,10 @@ class BaseModelWithConfig(BaseModel):
     }
 
 
+class GetSneakerVariantInput(BaseModelWithConfig):
+    sneaker_variant_id: int
+
+
 class CreateSneakerVariantInput(BaseModelWithConfig):
     sneaker_variant: SneakerVariantCreate
 

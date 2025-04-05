@@ -53,7 +53,7 @@ class SneakerVariant(Base):
     quantity: Mapped[int] = mapped_column(default=0)
 
     model: Mapped["SneakerModel"] = relationship(
-        "SneakerModel", back_populates="variants"
+        "SneakerModel", back_populates="variants", lazy="raise"
     )
 
     __table_args__ = (

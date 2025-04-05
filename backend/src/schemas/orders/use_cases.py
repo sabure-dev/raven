@@ -12,3 +12,4 @@ class BaseModelWithConfig(BaseModel):
 class CreateOrderInput(BaseModelWithConfig):
     order: OrderCreate
     items: list[OrderItemCreate]
+    user_id: int

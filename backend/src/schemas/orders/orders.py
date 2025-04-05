@@ -1,7 +1,9 @@
 from datetime import datetime
 from enum import Enum as PyEnum
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
+
+from schemas.sneaker_variant.sneaker_variant import SneakerVariantOut
 
 
 class OrderStatus(PyEnum):
@@ -14,8 +16,9 @@ class OrderStatus(PyEnum):
 
 class OrderItemBase(BaseModel):
     quantity: int = Field(..., gt=0)
-    price_at_time: float = Field(..., ge=0)
-    order_id: int
+    sneaker_variant_id: int
+    price_at_time: float | None = Field(None, ge=0)
+    order_id: int | None = None
 
 
 class OrderItemCreate(OrderItemBase):
@@ -24,23 +27,20 @@ class OrderItemCreate(OrderItemBase):
 
 class OrderItemOut(OrderItemBase):
     id: int
+    sneaker_variant: SneakerVariantOut | None
 
 
 class OrderBase(BaseModel):
-    user_id: int
-    total_amount: float = Field(..., ge=0)
+    total_amount: float | None = Field(None, ge=0)
 
 
 class OrderCreate(OrderBase):
-    @field_validator('total_amount')
-    def validate_total(cls, v, values):
-        if 'items' in values and v != sum(item.price_at_time * item.quantity for item in values['items']):
-            raise ValueError("Total amount must match sum of items")
-        return v
+    pass
 
 
 class OrderOut(OrderBase):
     id: int
-    items: list[OrderItemOut]
+    user_id: int
+    items: list[OrderItemOut] | None = None
     order_date: datetime
     status: OrderStatus

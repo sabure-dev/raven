@@ -28,6 +28,10 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def find_all_by_field(self, field: str, values: list, options: list | None = None) -> dict[any, ModelType]:
+        raise NotImplementedError
+
+    @abstractmethod
     async def delete_one(self, item_id: int) -> bool:
         raise NotImplementedError
 
@@ -100,10 +104,21 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         result = await self._session.execute(query)
         return list(result.unique().scalars().all())
 
+    async def find_all_by_field(self, field: str, values: list, options: list | None = None) -> dict[any, ModelType]:
+        if not values:
+            return {}
+        model_field = getattr(self._model, field)
+        stmt = select(self._model).where(model_field.in_(values))
+        if options:
+            for option in options:
+                stmt = stmt.options(option)
+
+        result = await self._session.execute(stmt)
+        return {item.id: item for item in result.scalars()}
+
     async def delete_one(self, item_id: int) -> bool:
         stmt = delete(self._model).where(self._model.id == item_id)
         result = await self._session.execute(stmt)
-        await self._session.commit()
         return result.rowcount > 0
 
     async def find_one_by_field(self, **filters: Any) -> Optional[ModelType]:
