@@ -13,10 +13,6 @@ class OrderService:
         order_dict = order.model_dump()
         order_dict['user_id'] = user_id
         order = await self.order_repo.create_one(order_dict)
-        # order = await self.order_repo.find_all_with_filters(
-        #     filters=[Order.id == order.id],
-        #     options=[selectinload(Order.items)]
-        # )
         return order
 
     async def cancel_order(self):

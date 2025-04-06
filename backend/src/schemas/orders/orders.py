@@ -17,16 +17,21 @@ class OrderStatus(PyEnum):
 class OrderItemBase(BaseModel):
     quantity: int = Field(..., gt=0)
     sneaker_variant_id: int
-    price_at_time: float | None = Field(None, ge=0)
-    order_id: int | None = None
 
 
 class OrderItemCreate(OrderItemBase):
     pass
 
 
+class OrderItemCreateInDB(OrderItemBase):
+    price_at_time: float | None = Field(None, ge=0)
+    order_id: int | None = None
+
+
 class OrderItemOut(OrderItemBase):
     id: int
+    price_at_time: float | None = Field(None, ge=0)
+    order_id: int | None = None
     sneaker_variant: SneakerVariantOut | None
 
 

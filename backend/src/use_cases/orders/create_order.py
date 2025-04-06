@@ -1,7 +1,7 @@
 from typing import Callable
 
 from core.exceptions import ItemNotFoundException
-from schemas.orders.orders import OrderOut
+from schemas.orders.orders import OrderOut, OrderCreate, OrderItemCreateInDB
 from schemas.orders.use_cases import CreateOrderInput
 from services.order_items import OrderItemService
 from services.orders import OrderService
@@ -22,6 +22,7 @@ class CreateOrderUseCase(BaseUseCase[CreateOrderInput, OrderOut]):
 
     async def execute(self, input_data: CreateOrderInput) -> OrderOut:
         total_amount = 0
+        order_items = []
 
         variant_ids = [item.sneaker_variant_id for item in input_data.items]
         variant_map = await self.sneaker_variant_service.get_all_by_ids(variant_ids)
@@ -30,16 +31,20 @@ class CreateOrderUseCase(BaseUseCase[CreateOrderInput, OrderOut]):
             variant = variant_map.get(item.sneaker_variant_id, None)
             if not variant:
                 raise ItemNotFoundException("SneakerVariant", "id", str(item.sneaker_variant_id))
-            item.price_at_time = variant.model.price
-            total_amount += item.price_at_time * item.quantity
+            order_items.append(OrderItemCreateInDB(
+                quantity=item.quantity,
+                sneaker_variant_id=item.sneaker_variant_id,
+                price_at_time=variant.model.price,
+            ))
+            total_amount += variant.model.price * item.quantity
 
-        input_data.order.total_amount = total_amount
         order = await self.order_service.create_order(
-            input_data.order,
+            OrderCreate(total_amount=total_amount),
             input_data.user_id
         )
 
-        for item in input_data.items:
+        for item in order_items:
             item.order_id = order.id
             await self.order_item_service.create_order_item(item)
+            await self.sneaker_variant_service.update_quantity_by_delta(item.sneaker_variant_id, -item.quantity)
         return order.to_read_model()

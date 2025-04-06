@@ -18,9 +18,6 @@ router = APIRouter(
 
 @router.post("", response_model=OrderOut, status_code=status.HTTP_201_CREATED)
 async def create_order(
-        order_to_create: Annotated[
-            OrderCreate, Body(title="Данные для создания заказа")
-        ],
         order_items: Annotated[
             list[OrderItemCreate], Body(title="Данные для создания пунктов заказа")
         ],
@@ -28,6 +25,6 @@ async def create_order(
         user: User = Depends(get_current_active_verified_user),
 ):
     order = await create_order_use_case.execute(
-        CreateOrderInput(order=order_to_create, items=order_items, user_id=user.id)
+        CreateOrderInput(items=order_items, user_id=user.id)
     )
     return order
