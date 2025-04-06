@@ -30,8 +30,12 @@ class SneakerVariantService:
         return sneaker_variant
 
     async def get_all_by_ids(self, ids: list) -> dict[int, SneakerVariant]:
-        return await self._sneaker_variant_repo.find_all_by_field("id", ids,
-                                                                  options=[selectinload(SneakerVariant.model)])
+        sneakers_variants = await self._sneaker_variant_repo.find_all_by_field("id", ids,
+                                                                               options=[
+                                                                                   selectinload(SneakerVariant.model)])
+        if len(sneakers_variants) != len(ids):
+            raise ItemNotFoundException("SneakerVariants", "ids", ','.join(str(var_id) for var_id in ids))
+        return sneakers_variants
 
     async def create_sneaker_variant(self, sneaker_variant: SneakerVariantCreate) -> int:
         sneaker_variant_dict = sneaker_variant.model_dump()

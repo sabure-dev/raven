@@ -1,7 +1,5 @@
 from typing import Callable
 
-from sqlalchemy.orm import selectinload
-
 from core.utils.repository import AbstractRepository
 from db.models.orders import Order
 from schemas.orders.orders import OrderCreate
