@@ -1,9 +1,10 @@
 from datetime import datetime
 from enum import Enum as PyEnum
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from schemas.sneaker_variant.sneaker_variant import SneakerVariantOut
+from schemas.sneaker_variant.sneaker_variant import SneakerVariantOut, SneakerVariantOutWithModel
 
 
 class OrderStatus(PyEnum):
@@ -32,7 +33,7 @@ class OrderItemOut(OrderItemBase):
     id: int
     price_at_time: float | None = Field(None, ge=0)
     order_id: int | None = None
-    sneaker_variant: SneakerVariantOut | None
+    sneaker_variant: SneakerVariantOutWithModel | None
 
 
 class OrderBase(BaseModel):
@@ -49,3 +50,13 @@ class OrderOut(OrderBase):
     items: list[OrderItemOut] | None = None
     order_date: datetime
     status: OrderStatus
+
+
+class OrderParams(BaseModel):
+    order_id: int | None = None
+    sneaker_name: str | None = None
+    sneaker_brand: str | None = None
+    search_query: str | None = None
+    offset: int | None = None
+    limit: int | None = None
+    sort_by_date: Literal["asc", "desc"] | None = None

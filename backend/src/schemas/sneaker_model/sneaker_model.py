@@ -2,8 +2,6 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from schemas.sneaker_variant.sneaker_variant import SneakerVariantOut
-
 
 class SneakerModelBase(BaseModel):
     name: str
@@ -19,7 +17,7 @@ class SneakerModelCreate(SneakerModelBase):
 
 class SneakerModelOut(SneakerModelBase):
     id: int
-    variants: list[SneakerVariantOut] | None = None
+    variants: list["SneakerVariantOut"] | None = None
 
 
 class SneakerModelUpdate(BaseModel):
@@ -44,3 +42,8 @@ class SneakerModelParams(BaseModel):
     offset: int | None = None
     limit: int | None = None
     sort_by_price: Literal["asc", "desc"] | None = None
+
+
+from schemas.sneaker_variant.sneaker_variant import SneakerVariantOut
+
+SneakerModelOut.model_rebuild()

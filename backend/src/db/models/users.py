@@ -42,7 +42,7 @@ class User(Base):
         CheckConstraint("balance >= 0", name="check_users_balance"),
     )
 
-    def to_read_model(self) -> UserOut:
+    def to_read_model(self, include_orders: bool = False) -> UserOut:
         return UserOut(
             id=self.id,
             username=self.username,
@@ -53,4 +53,7 @@ class User(Base):
             is_verified=self.is_verified,
             created_at=self.created_at,
             updated_at=self.updated_at,
+            orders=[order.to_read_model() for order in self.orders]
+            if include_orders and self.orders is not None
+            else None,
         )

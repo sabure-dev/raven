@@ -2,6 +2,7 @@ from typing import Callable, Any
 
 from pydantic import EmailStr
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 
 from core.exceptions import (
     ItemAlreadyExistsException,
@@ -64,8 +65,11 @@ class UserService:
 
         return await self._user_repo.update_one(user.id, {"is_verified": is_verified})
 
-    async def get_user_by_id(self, user_id: int) -> User:
-        user = await self._user_repo.find_one_by_field(id=user_id)
+    async def get_user_by_id(self, user_id: int, load_orders: bool = False) -> User:
+        options = []
+        if load_orders:
+            options.append(selectinload(User.orders))
+        user = await self._user_repo.find_one_by_field(id=user_id, options=options)
         if not user:
             raise ItemNotFoundException("User", "id", str(user_id))
         return user

@@ -34,7 +34,8 @@ class Order(Base):
             id=self.id,
             user_id=self.user_id,
             order_date=self.order_date,
-            items=[item.to_read_model() for item in self.items] if include_items and self.items is not None else None,
+            items=[item.to_read_model(include_sneaker_variant=True) for item in
+                   self.items] if include_items and self.items is not None else None,
             status=self.status,
             total_amount=self.total_amount,
         )
@@ -64,5 +65,5 @@ class OrderItem(Base):
             quantity=self.quantity,
             sneaker_variant_id=self.sneaker_variant_id,
             price_at_time=self.price_at_time,
-            sneaker_variant=self.sneaker_variant if include_sneaker_variant and self.sneaker_variant is not None else None,
+            sneaker_variant=self.sneaker_variant.to_read_model_with_name() if include_sneaker_variant and self.sneaker_variant is not None else None,
         )

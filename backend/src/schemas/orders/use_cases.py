@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from schemas.orders.orders import OrderCreate, OrderItemCreate
+from schemas.orders.orders import OrderItemCreate, OrderParams
 
 
 class BaseModelWithConfig(BaseModel):
@@ -12,3 +12,8 @@ class BaseModelWithConfig(BaseModel):
 class CreateOrderInput(BaseModelWithConfig):
     items: list[OrderItemCreate]
     user_id: int
+
+
+class GetOrdersInput(BaseModelWithConfig):
+    user_id: int
+    params: OrderParams

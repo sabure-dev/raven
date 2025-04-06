@@ -8,6 +8,7 @@ from services.order_items import OrderItemService
 from services.orders import OrderService
 from services.sneaker_variant import SneakerVariantService
 from use_cases.orders.create_order import CreateOrderUseCase
+from use_cases.orders.get_orders import GetOrdersUseCase
 
 
 def get_create_order_use_case(
@@ -22,3 +23,11 @@ def get_create_order_use_case(
         )
 ) -> CreateOrderUseCase:
     return CreateOrderUseCase(order_service_factory, order_item_service_factory, sneaker_variant_service_factory)
+
+
+def get_get_orders_use_case(
+        order_service_factory: Callable[[], OrderService] = Depends(
+            get_order_service_factory
+        ),
+) -> GetOrdersUseCase:
+    return GetOrdersUseCase(order_service_factory)

@@ -3,7 +3,7 @@ from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from db.session.base import Base
 from schemas.sneaker_model.sneaker_model import SneakerModelOut
-from schemas.sneaker_variant.sneaker_variant import SneakerVariantOut
+from schemas.sneaker_variant.sneaker_variant import SneakerVariantOut, SneakerVariantOutWithModel
 
 
 class SneakerModel(Base):
@@ -67,4 +67,13 @@ class SneakerVariant(Base):
             model_id=self.model_id,
             size=self.size,
             quantity=self.quantity,
+        )
+
+    def to_read_model_with_name(self) -> SneakerVariantOutWithModel:
+        return SneakerVariantOutWithModel(
+            id=self.id,
+            model_id=self.model_id,
+            size=self.size,
+            quantity=self.quantity,
+            sneaker_model=self.model.to_read_model(),
         )
