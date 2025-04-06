@@ -27,7 +27,7 @@ class CreateOrderUseCase(BaseUseCase[CreateOrderInput, OrderOut]):
         variant_map = await self.sneaker_variant_service.get_all_by_ids(variant_ids)
 
         for item in input_data.items:
-            variant = variant_map[item.sneaker_variant_id]
+            variant = variant_map.get(item.sneaker_variant_id, None)
             if not variant:
                 raise ItemNotFoundException("SneakerVariant", "id", str(item.sneaker_variant_id))
             item.price_at_time = variant.model.price
