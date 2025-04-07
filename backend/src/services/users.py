@@ -2,6 +2,7 @@ from typing import Callable, Any
 
 from pydantic import EmailStr
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 
 from core.exceptions import (
     ItemAlreadyExistsException,
@@ -14,11 +15,13 @@ from core.utils.password import get_password_hash, verify_password
 from core.utils.repository import AbstractRepository
 from db.models.users import User
 from schemas.users.users import UserCreate
+from core.config.config import settings
 
 
 class UserService:
     def __init__(self, user_repo_factory: Callable[[], AbstractRepository]):
         self._user_repo = user_repo_factory()
+        self.balance_award_percent = settings.api_settings.BALANCE_AWARD_PERCENT
 
     async def _handle_unique_violation(
             self, fields: dict[str, Any],
@@ -31,6 +34,7 @@ class UserService:
 
         try:
             created_user = await self._user_repo.create_one(user_dict)
+            return created_user
         except IntegrityError as e:
             if "unique constraint" in str(e).lower():
                 if "email" in str(e).lower():
@@ -38,8 +42,6 @@ class UserService:
                 elif "username" in str(e).lower():
                     await self._handle_unique_violation({"username": user.username})
             raise
-
-        return created_user
 
     async def get_user_by_email(self, email: EmailStr) -> User:
         user = await self._user_repo.find_one_by_field(email=email)
@@ -65,8 +67,11 @@ class UserService:
 
         return await self._user_repo.update_one(user.id, {"is_verified": is_verified})
 
-    async def get_user_by_id(self, user_id: int) -> User:
-        user = await self._user_repo.find_one_by_field(id=user_id)
+    async def get_user_by_id(self, user_id: int, load_orders: bool = False) -> User:
+        options = []
+        if load_orders:
+            options.append(selectinload(User.orders))
+        user = await self._user_repo.find_one_by_field(id=user_id, options=options)
         if not user:
             raise ItemNotFoundException("User", "id", str(user_id))
         return user
@@ -115,3 +120,17 @@ class UserService:
             raise InvalidCredentialsException()
 
         await self.update_user_password(user_id, new_password)
+
+    async def update_balance_by_delta(self, user_id: int, delta: float) -> User:
+        updated_user = await self._user_repo.increment_field(
+            user_id,
+            "balance",
+            delta
+        )
+        if updated_user is None:
+            raise ItemNotFoundException("User", "id", str(user_id))
+        return updated_user
+
+    async def update_balance_after_order(self, user_id: int, total_amount: float):
+        delta = self.balance_award_percent * total_amount / 100
+        await self.update_balance_by_delta(user_id, delta)

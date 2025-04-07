@@ -4,17 +4,28 @@ from fastapi import APIRouter, Body, Depends, Path, Query
 from starlette import status
 
 from core.dependencies.sneaker_variant.use_cases import get_create_sneaker_variant_use_case, \
-    get_update_sneaker_variant_quantity_use_case, get_delete_sneaker_variant_use_case
+    get_update_sneaker_variant_quantity_use_case, get_delete_sneaker_variant_use_case, get_get_sneaker_variant_use_case
 from core.dependencies.users.security import get_current_superuser
 from db.models.users import User
 from schemas.sneaker_variant.sneaker_variant import SneakerVariantOut, SneakerVariantCreate
 from schemas.sneaker_variant.use_cases import CreateSneakerVariantInput, UpdateSneakerVariantQuantityInput, \
-    DeleteSneakerVariantInput
+    DeleteSneakerVariantInput, GetSneakerVariantInput
 
 router = APIRouter(
     prefix="/sneaker_variant",
     tags=["SneakerVariant"]
 )
+
+
+@router.get("/{sneaker_variant_id}", response_model=SneakerVariantOut, status_code=status.HTTP_200_OK)
+async def get_sneaker_variant(
+        sneaker_variant_id: Annotated[int, Path(title="ID of sneaker variant")],
+        get_sneaker_variant_use_case=Depends(get_get_sneaker_variant_use_case),
+):
+    sneaker_variant = await get_sneaker_variant_use_case.execute(
+        GetSneakerVariantInput(sneaker_variant_id=sneaker_variant_id)
+    )
+    return sneaker_variant
 
 
 @router.post("", response_model=SneakerVariantOut, status_code=status.HTTP_201_CREATED)

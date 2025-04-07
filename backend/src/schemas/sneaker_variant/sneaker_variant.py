@@ -13,3 +13,12 @@ class SneakerVariantCreate(SneakerVariantBase):
 
 class SneakerVariantOut(SneakerVariantBase):
     id: int
+
+
+class SneakerVariantOutWithModel(SneakerVariantOut):
+    sneaker_model: "SneakerModelOut"
+
+
+from schemas.sneaker_model.sneaker_model import SneakerModelOut
+
+SneakerVariantOutWithModel.model_rebuild()

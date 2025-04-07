@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field
+from typing import Literal
 
-from schemas.sneaker_variant.sneaker_variant import SneakerVariantOut
+from pydantic import BaseModel, Field
 
 
 class SneakerModelBase(BaseModel):
@@ -17,7 +17,7 @@ class SneakerModelCreate(SneakerModelBase):
 
 class SneakerModelOut(SneakerModelBase):
     id: int
-    variants: list[SneakerVariantOut] | None = None
+    variants: list["SneakerVariantOut"] | None = None
 
 
 class SneakerModelUpdate(BaseModel):
@@ -41,3 +41,9 @@ class SneakerModelParams(BaseModel):
     in_stock: bool | None = None
     offset: int | None = None
     limit: int | None = None
+    sort_by_price: Literal["asc", "desc"] | None = None
+
+
+from schemas.sneaker_variant.sneaker_variant import SneakerVariantOut
+
+SneakerModelOut.model_rebuild()

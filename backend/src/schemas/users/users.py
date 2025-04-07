@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, Field
 
+from schemas.orders.orders import OrderOut
+
 
 class UserBase(BaseModel):
     username: str = Field(..., min_length=3)
@@ -22,6 +24,8 @@ class UserOut(UserBase):
 
     created_at: datetime
     updated_at: datetime
+
+    orders: list[OrderOut] | None = None
 
 
 class ChangePasswordRequest(BaseModel):

@@ -6,7 +6,16 @@ from core.dependencies.sneaker_variant.services import get_sneaker_variant_servi
 from services.sneaker_variant import SneakerVariantService
 from use_cases.sneakers_variant.create_sneaker_variant import CreateSneakerVariantUseCase
 from use_cases.sneakers_variant.delete_sneaker_variant import DeleteSneakerVariantUseCase
+from use_cases.sneakers_variant.get_sneaker_variant import GetSneakerVariantUseCase
 from use_cases.sneakers_variant.update_sneaker_variant import UpdateSneakerVariantQuantityUseCase
+
+
+def get_get_sneaker_variant_use_case(
+        sneaker_variant_service_factory: Callable[[], SneakerVariantService] = Depends(
+            get_sneaker_variant_service_factory
+        ),
+) -> GetSneakerVariantUseCase:
+    return GetSneakerVariantUseCase(sneaker_variant_service_factory)
 
 
 def get_create_sneaker_variant_use_case(

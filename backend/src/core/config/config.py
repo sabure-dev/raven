@@ -36,17 +36,14 @@ class AuthJWTSettings(BaseSettings):
     private_key_path: Path = BASE_DIR / "certs" / "jwt-private.pem"
     public_key_path: Path = BASE_DIR / "certs" / "jwt-public.pem"
     algorithm: str = os.environ.get("ALGORITHM")
-    access_token_expire_minutes: int = int(
-        os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES")
-    )
+    access_token_expire_minutes: int = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES"))
     refresh_token_expire_days: int = int(os.environ.get("REFRESH_TOKEN_EXPIRE_DAYS"))
-    verification_token_expire_minutes: int = int(
-        os.environ.get("VERIFICATION_TOKEN_EXPIRE_MINUTES")
-    )
+    verification_token_expire_minutes: int = int(os.environ.get("VERIFICATION_TOKEN_EXPIRE_MINUTES"))
 
 
 class APISettings(BaseSettings):
     BASE_URL: str = "http://localhost:8000"
+    BALANCE_AWARD_PERCENT: int
 
 
 class Settings(BaseSettings):

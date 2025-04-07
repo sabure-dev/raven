@@ -32,7 +32,6 @@ def upgrade() -> None:
                               nullable=False),
                     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'),
                               nullable=False),
-                    sa.CheckConstraint('balance >= 0', name='check_users_balance'),
                     sa.PrimaryKeyConstraint('id'),
                     sa.UniqueConstraint('email', name='uq_users_email'),
                     sa.UniqueConstraint('username', name='uq_users_username')

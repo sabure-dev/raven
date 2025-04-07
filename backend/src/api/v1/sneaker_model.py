@@ -47,7 +47,7 @@ async def create_sneaker_model(
 @router.get("", response_model=list[SneakerModelOut], status_code=status.HTTP_200_OK)
 async def get_sneakers_models_by_filters(
         sneaker_model_params: Annotated[
-            SneakerModelParams, Query(title="Параметры для пользователя")
+            SneakerModelParams, Query(title="Параметры для фильтрации и сортировки")
         ],
         get_sneakers_models_use_case=Depends(get_get_sneakers_models_use_case),
 ):
@@ -57,7 +57,7 @@ async def get_sneakers_models_by_filters(
     return sneakers_models
 
 
-@router.patch(
+@router.put(
     "/{sneaker_model_id}",
     response_model=SneakerModelOut,
     status_code=status.HTTP_200_OK,
