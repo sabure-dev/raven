@@ -39,7 +39,6 @@ class User(Base):
     __table_args__ = (
         UniqueConstraint("username", name="uq_users_username"),
         UniqueConstraint("email", name="uq_users_email"),
-        CheckConstraint("balance >= 0", name="check_users_balance"),
     )
 
     def to_read_model(self, include_orders: bool = False) -> UserOut:

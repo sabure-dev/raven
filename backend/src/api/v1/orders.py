@@ -1,14 +1,15 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query, Path
 from starlette import status
 
-from core.dependencies.orders.use_cases import get_create_order_use_case, get_get_orders_use_case
+from core.dependencies.orders.use_cases import get_create_order_use_case, get_get_orders_use_case, \
+    get_cancel_order_use_case
 from core.dependencies.users.security import get_current_active_verified_user
 
 from db.models.users import User
 from schemas.orders.orders import OrderOut, OrderItemCreate, OrderParams
-from schemas.orders.use_cases import CreateOrderInput, GetOrdersInput
+from schemas.orders.use_cases import CreateOrderInput, GetOrdersInput, CancelOrderInput
 
 router = APIRouter(
     prefix="/orders",
@@ -42,3 +43,15 @@ async def get_user_orders(
         GetOrdersInput(user_id=user.id, params=order_params)
     )
     return orders
+
+
+@router.patch("/{order_id}", response_model=OrderOut, status_code=status.HTTP_200_OK)
+async def cancel_order(
+        order_id: Annotated[int, Path(title="ID of order to cancel")],
+        cancel_order_use_case=Depends(get_cancel_order_use_case),
+        user: User = Depends(get_current_active_verified_user),
+):
+    order = await cancel_order_use_case.execute(
+        CancelOrderInput(order_id=order_id, user_id=user.id)
+    )
+    return order

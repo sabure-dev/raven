@@ -6,6 +6,7 @@ from schemas.orders.use_cases import CreateOrderInput
 from services.order_items import OrderItemService
 from services.orders import OrderService
 from services.sneaker_variant import SneakerVariantService
+from services.users import UserService
 from use_cases.base import BaseUseCase
 
 
@@ -15,10 +16,12 @@ class CreateOrderUseCase(BaseUseCase[CreateOrderInput, OrderOut]):
             order_service_factory: Callable[[], OrderService],
             order_item_service_factory: Callable[[], OrderItemService],
             sneaker_variant_service_factory: Callable[[], SneakerVariantService],
+            user_service_factory: Callable[[], UserService],
     ):
         self.order_service = order_service_factory()
         self.order_item_service = order_item_service_factory()
         self.sneaker_variant_service = sneaker_variant_service_factory()
+        self.user_service = user_service_factory()
 
     async def execute(self, input_data: CreateOrderInput) -> OrderOut:
         total_amount = 0
@@ -47,4 +50,7 @@ class CreateOrderUseCase(BaseUseCase[CreateOrderInput, OrderOut]):
             item.order_id = order.id
             await self.order_item_service.create_order_item(item)
             await self.sneaker_variant_service.update_quantity_by_delta(item.sneaker_variant_id, -item.quantity)
+
+        await self.user_service.update_balance_after_order(input_data.user_id, total_amount)
+
         return order.to_read_model()

@@ -56,12 +56,17 @@ class SneakerVariantService:
         return sneaker_variant_id
 
     async def update_quantity_by_delta(self, sneaker_variant_id: int, delta: int) -> SneakerVariant:
+        sneaker_variant = await self.get_sneaker_variant_by_id(sneaker_variant_id)
+        if sneaker_variant.quantity + delta < 0:
+            raise InvalidFieldValueException("SneakerVariant.quantity", "non-negative number")
+
         updated_sneaker_variant = await self._sneaker_variant_repo.increment_field(
             sneaker_variant_id,
             "quantity",
             delta)
         if updated_sneaker_variant is None:
-            raise InvalidFieldValueException("SneakerVariant.quantity", "non-negative number or item not found")
+            raise ItemNotFoundException("SneakerVariant", "id", str(sneaker_variant_id))
+
         return updated_sneaker_variant
 
     async def delete_sneaker_variant(self, sneaker_variant_id: int) -> None:

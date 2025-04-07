@@ -17,3 +17,8 @@ class CreateOrderInput(BaseModelWithConfig):
 class GetOrdersInput(BaseModelWithConfig):
     user_id: int
     params: OrderParams
+
+
+class CancelOrderInput(BaseModelWithConfig):
+    user_id: int
+    order_id: int

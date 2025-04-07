@@ -48,7 +48,7 @@ class AbstractRepository(ABC):
             self,
             item_id: int,
             field: str,
-            delta: int) -> ModelType | None:
+            delta: float) -> ModelType | None:
         raise NotImplementedError
 
 
@@ -143,11 +143,11 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
             self,
             item_id: int,
             field: str,
-            delta: int
+            delta: float
     ) -> ModelType | None:
         model_field = getattr(self._model, field)
         new_value = model_field + delta
-        where_condition = and_(self._model.id == item_id, new_value >= 0)
+        where_condition = self._model.id == item_id
 
         stmt = (
             update(self._model)

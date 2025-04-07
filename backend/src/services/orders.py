@@ -3,10 +3,11 @@ from typing import Callable, Literal
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import selectinload
 
+from core.exceptions import InsufficientPermissionsException, ItemNotFoundException
 from core.utils.repository import AbstractRepository
 from db.models import SneakerVariant, SneakerModel
 from db.models.orders import Order, OrderItem
-from schemas.orders.orders import OrderCreate
+from schemas.orders.orders import OrderCreate, OrderStatus
 
 
 class OrderService:
@@ -75,5 +76,16 @@ class OrderService:
 
         return orders
 
-    async def cancel_order(self):
-        pass
+    async def get_order_by_id(self, order_id: int) -> Order:
+        order = await self._order_repo.find_one_by_field(id=order_id)
+        if not order:
+            raise ItemNotFoundException("Order", "id", str(order_id))
+        return order
+
+    async def cancel_order(self, order_id: int, user_id: int) -> Order:
+        order = await self.get_order_by_id(order_id)
+        if (order.status not in (OrderStatus.PENDING, OrderStatus.PROCESSING)) or (order.user_id != user_id):
+            raise InsufficientPermissionsException()
+
+        updated_order = await self._order_repo.update_one(order_id, {"status": OrderStatus.CANCELLED})
+        return updated_order
