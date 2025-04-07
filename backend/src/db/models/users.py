@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from pydantic import EmailStr
-from sqlalchemy import String, DateTime, func, CheckConstraint, UniqueConstraint
+from sqlalchemy import String, DateTime, func, UniqueConstraint
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from db.session.base import Base

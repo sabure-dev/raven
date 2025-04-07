@@ -9,7 +9,7 @@ from core.exceptions import (
     ItemNotFoundException,
     UserAlreadyVerifiedException,
     InvalidCredentialsException,
-    UnverifiedEmailException, InvalidFieldValueException,
+    UnverifiedEmailException,
 )
 from core.utils.password import get_password_hash, verify_password
 from core.utils.repository import AbstractRepository
