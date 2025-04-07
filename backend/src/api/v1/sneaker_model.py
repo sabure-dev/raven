@@ -57,7 +57,7 @@ async def get_sneakers_models_by_filters(
     return sneakers_models
 
 
-@router.patch(
+@router.put(
     "/{sneaker_model_id}",
     response_model=SneakerModelOut,
     status_code=status.HTTP_200_OK,
