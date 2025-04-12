@@ -22,7 +22,13 @@ class User(Base):
         "Order",
         back_populates="user",
         lazy="raise",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+    )
+    bets: Mapped[list["Bet"]] = relationship(
+        "Bet",
+        back_populates="user",
+        lazy="raise",
+        cascade="all, delete-orphan",
     )
 
     is_superuser: Mapped[bool] = mapped_column(default=False)

@@ -18,8 +18,9 @@ class Order(Base):
     status: Mapped[OrderStatus] = mapped_column(Enum(OrderStatus), default=OrderStatus.PENDING)
     total_amount: Mapped[float] = mapped_column(default=0.0)
 
-    user: Mapped["User"] = relationship(back_populates="orders")
+    user: Mapped["User"] = relationship("User", back_populates="orders", lazy="raise")
     items: Mapped[list["OrderItem"]] = relationship(
+        "OrderItem",
         back_populates="order",
         cascade="all, delete-orphan",
         lazy="raise"
@@ -50,8 +51,8 @@ class OrderItem(Base):
     price_at_time: Mapped[float] = mapped_column(default=0.0)
     sneaker_variant_id: Mapped[int] = mapped_column(ForeignKey("sneaker_variants.id", ondelete="RESTRICT"))
 
-    sneaker_variant: Mapped["SneakerVariant"] = relationship(lazy="raise")
-    order: Mapped["Order"] = relationship(back_populates="items")
+    sneaker_variant: Mapped["SneakerVariant"] = relationship("SneakerVariant", lazy="raise")
+    order: Mapped["Order"] = relationship("Order", back_populates="items", lazy="raise")
 
     __table_args__ = (
         CheckConstraint("quantity > 0", name="check_order_item_quantity"),
