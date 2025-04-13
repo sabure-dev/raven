@@ -6,7 +6,7 @@ from services.orders import OrderService
 from use_cases.base import BaseUseCase
 
 
-class GetOrdersUseCase(BaseUseCase[None, list[OrderOut]]):
+class GetOrdersUseCase(BaseUseCase[GetOrdersInput, list[OrderOut]]):
     def __init__(
             self, order_service_factory: Callable[[], OrderService]
     ):

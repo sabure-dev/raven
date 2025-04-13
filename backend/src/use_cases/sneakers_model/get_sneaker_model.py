@@ -6,7 +6,7 @@ from services.sneaker_model import SneakerModelService
 from use_cases.base import BaseUseCase
 
 
-class GetSneakersModelsUseCase(BaseUseCase[None, List[SneakerModelOut]]):
+class GetSneakersModelsUseCase(BaseUseCase[GetSneakersModelsInput, List[SneakerModelOut]]):
     def __init__(
             self, sneaker_model_service_factory: Callable[[], SneakerModelService]
     ):

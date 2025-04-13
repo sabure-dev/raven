@@ -4,6 +4,7 @@ from sqlalchemy import ForeignKey, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.session.base import Base
+from schemas.bets.bets import BetOut
 
 
 class Bet(Base):
@@ -30,3 +31,12 @@ class Bet(Base):
         lazy="raise"
     )
 
+    def to_read_model(self) -> BetOut:
+        return BetOut(
+            id=self.id,
+            user_id=self.user_id,
+            round_id=self.round_id,
+            amount=self.amount,
+            created_at=self.created_at,
+            is_winner=self.is_winner,
+        )

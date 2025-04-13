@@ -4,7 +4,7 @@ from sqlalchemy import Enum, ForeignKey, DateTime, func
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from db.session.base import Base
-from schemas.rounds.rounds import RoundStatus
+from schemas.rounds.rounds import RoundStatus, RoundOut
 
 
 class Round(Base):
@@ -23,7 +23,7 @@ class Round(Base):
         DateTime(timezone=True), server_default=func.now()
     )
     closed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True), nullable=True, default=None, onupdate=func.now()
     )
 
     bets: Mapped[list["Bet"]] = relationship(
@@ -34,6 +34,19 @@ class Round(Base):
     )
     model: Mapped["SneakerModel"] = relationship(
         "SneakerModel",
-        back_populates="variants",
-        lazy="raise"
+        lazy="joined",
     )
+
+    def to_read_model(self, include_bets: bool = False) -> RoundOut:
+        return RoundOut(
+            id=self.id,
+            status=self.status,
+            winner_id=self.winner_id,
+            model=self.model.to_read_model(),
+            planned_time=self.planned_time,
+            created_at=self.created_at,
+            closed_at=self.closed_at,
+            bets=[bet.to_read_model() for bet in self.bets]
+            if include_bets and self.bets is not None
+            else None,
+        )

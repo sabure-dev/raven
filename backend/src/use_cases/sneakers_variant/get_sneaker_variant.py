@@ -6,7 +6,7 @@ from services.sneaker_variant import SneakerVariantService
 from use_cases.base import BaseUseCase
 
 
-class GetSneakerVariantUseCase(BaseUseCase[None, SneakerVariantOut]):
+class GetSneakerVariantUseCase(BaseUseCase[GetSneakerVariantInput, SneakerVariantOut]):
     def __init__(
             self, sneaker_variant_service_factory: Callable[[], SneakerVariantService]
     ):
