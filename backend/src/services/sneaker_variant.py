@@ -39,10 +39,10 @@ class SneakerVariantService:
         return await self._sneaker_variant_repo.find_all_by_field("id", ids,
                                                                   options=[selectinload(SneakerVariant.model)])
 
-    async def create_sneaker_variant(self, sneaker_variant: SneakerVariantCreate) -> int:
+    async def create_sneaker_variant(self, sneaker_variant: SneakerVariantCreate) -> SneakerVariant:
         sneaker_variant_dict = sneaker_variant.model_dump()
         try:
-            sneaker_variant_id = await self._sneaker_variant_repo.create_one(sneaker_variant_dict)
+            created_sneaker_variant = await self._sneaker_variant_repo.create_one(sneaker_variant_dict)
         except IntegrityError as e:
             if "foreign key" in str(e).lower():
                 await self._handle_foreign_key_not_found_violation("id", str(sneaker_variant.model_id))
@@ -53,7 +53,7 @@ class SneakerVariantService:
                     "size": sneaker_variant.size
                 })
             raise
-        return sneaker_variant_id
+        return created_sneaker_variant
 
     async def update_quantity_by_delta(self, sneaker_variant_id: int, delta: int) -> SneakerVariant:
         sneaker_variant = await self.get_sneaker_variant_by_id(sneaker_variant_id)

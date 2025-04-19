@@ -2,6 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, Field
 
+from schemas.bets.bets import BetOut
 from schemas.orders.orders import OrderOut
 
 
@@ -26,6 +27,7 @@ class UserOut(UserBase):
     updated_at: datetime
 
     orders: list[OrderOut] | None = None
+    bets: list[BetOut] | None = None
 
 
 class ChangePasswordRequest(BaseModel):

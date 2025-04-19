@@ -47,7 +47,11 @@ class User(Base):
         UniqueConstraint("email", name="uq_users_email"),
     )
 
-    def to_read_model(self, include_orders: bool = False) -> UserOut:
+    def to_read_model(
+            self,
+            include_orders: bool = False,
+            include_bets: bool = False,
+    ) -> UserOut:
         return UserOut(
             id=self.id,
             username=self.username,
@@ -60,5 +64,8 @@ class User(Base):
             updated_at=self.updated_at,
             orders=[order.to_read_model() for order in self.orders]
             if include_orders and self.orders is not None
+            else None,
+            bets=[bet.to_read_model() for bet in self.bets]
+            if include_bets and self.bets is not None
             else None,
         )

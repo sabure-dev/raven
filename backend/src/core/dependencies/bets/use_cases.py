@@ -1,0 +1,20 @@
+from typing import Callable
+
+from fastapi import Depends
+
+from core.dependencies.bets.services import get_bet_service_factory
+from core.dependencies.users.services import get_user_service_factory
+from services.bets import BetService
+from services.users import UserService
+from use_cases.bets.create_bet import CreateBetUseCase
+
+
+def get_create_bet_use_case(
+        bet_service_factory: Callable[[], BetService] = Depends(
+            get_bet_service_factory
+        ),
+        user_service_factory: Callable[[], UserService] = Depends(
+            get_user_service_factory
+        ),
+) -> CreateBetUseCase:
+    return CreateBetUseCase(bet_service_factory, user_service_factory)

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from sqlalchemy import Enum, ForeignKey, DateTime, func
+from sqlalchemy import Enum, ForeignKey, DateTime, func, CheckConstraint
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from db.session.base import Base
@@ -15,6 +15,7 @@ class Round(Base):
     status: Mapped[RoundStatus] = mapped_column(Enum(RoundStatus), default=RoundStatus.PLANNED)
     winner_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='SET NULL'), nullable=True, default=None)
     model_id: Mapped[int] = mapped_column(ForeignKey("sneaker_models.id", ondelete="CASCADE"), index=True)
+    min_bet_amount: Mapped[int] = mapped_column(default=100)
 
     planned_time: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now() + timedelta(days=1)
@@ -30,19 +31,30 @@ class Round(Base):
         "Bet",
         back_populates="round",
         lazy="raise",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
     model: Mapped["SneakerModel"] = relationship(
         "SneakerModel",
         lazy="joined",
     )
 
-    def to_read_model(self, include_bets: bool = False) -> RoundOut:
+    __table_args__ = (
+        CheckConstraint("min_bet_amount > 0", name="check_round_min_bet_amount"),
+    )
+
+    def to_read_model(
+            self,
+            include_bets: bool = False,
+            include_model: bool = False,
+    ) -> RoundOut:
         return RoundOut(
             id=self.id,
             status=self.status,
             winner_id=self.winner_id,
-            model=self.model.to_read_model(),
+            model=self.model.to_read_model()
+            if include_model and self.model is not None
+            else None,
+            min_bet_amount=self.min_bet_amount,
             planned_time=self.planned_time,
             created_at=self.created_at,
             closed_at=self.closed_at,

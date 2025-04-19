@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum as PyEnum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from schemas.bets.bets import BetOut
 from schemas.sneaker_model.sneaker_model import SneakerModelOut
@@ -14,18 +14,18 @@ class RoundStatus(PyEnum):
 
 
 class RoundBase(BaseModel):
-    pass
+    min_bet_amount: int = Field(100, gt=0)
 
 
 class RoundCreate(RoundBase):
-    planned_time: datetime | None = None
+    planned_time: datetime | None = datetime.now() + timedelta(days=1)
     model_id: int
 
 
 class RoundOut(RoundBase):
     id: int
     status: RoundStatus
-    model: SneakerModelOut
+    model: SneakerModelOut | None = None
     bets: list[BetOut] | None = None
     winner_id: int | None = None
     planned_time: datetime

@@ -11,4 +11,4 @@ class GetCurrentRoundUseCase(BaseUseCase[None, RoundOut]):
 
     async def execute(self, input_data: None = None) -> RoundOut:
         current_round = await self.round_service.get_current_round()
-        return current_round.to_read_model(include_bets=True)
+        return current_round.to_read_model(include_bets=True, include_model=True)

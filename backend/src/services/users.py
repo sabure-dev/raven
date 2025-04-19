@@ -9,7 +9,7 @@ from core.exceptions import (
     ItemNotFoundException,
     UserAlreadyVerifiedException,
     InvalidCredentialsException,
-    UnverifiedEmailException,
+    UnverifiedEmailException, InvalidFieldValueException,
 )
 from core.utils.password import get_password_hash, verify_password
 from core.utils.repository import AbstractRepository
@@ -67,10 +67,17 @@ class UserService:
 
         return await self._user_repo.update_one(user.id, {"is_verified": is_verified})
 
-    async def get_user_by_id(self, user_id: int, load_orders: bool = False) -> User:
+    async def get_user_by_id(
+            self,
+            user_id: int,
+            load_orders: bool = False,
+            load_bets: bool = False,
+    ) -> User:
         options = []
         if load_orders:
             options.append(selectinload(User.orders))
+        if load_bets:
+            options.append(selectinload(User.bets))
         user = await self._user_repo.find_one_by_field(id=user_id, options=options)
         if not user:
             raise ItemNotFoundException("User", "id", str(user_id))
@@ -131,6 +138,13 @@ class UserService:
             raise ItemNotFoundException("User", "id", str(user_id))
         return updated_user
 
-    async def update_balance_after_order(self, user_id: int, total_amount: float):
+    async def update_balance_after_order(self, user_id: int, total_amount: float) -> User:
         delta = self.balance_award_percent * total_amount / 100
-        await self.update_balance_by_delta(user_id, delta)
+        return await self.update_balance_by_delta(user_id, delta)
+
+    async def update_balance_after_bet(self, user_id: int, delta: float) -> User:
+        user = await self.get_user_by_id(user_id)
+        if user.balance + delta < 0:
+            raise InvalidFieldValueException("User.balance", "non-negative number")
+
+        return await self.update_balance_by_delta(user_id, delta)

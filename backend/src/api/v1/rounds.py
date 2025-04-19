@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from core.dependencies.rounds.use_case import get_create_round_use_case, get_get_current_round_use_case
+from core.dependencies.rounds.use_cases import get_create_round_use_case, get_get_current_round_use_case
 from core.dependencies.users.security import get_current_superuser
 from db.models import User
 from schemas.rounds.rounds import RoundOut, RoundCreate

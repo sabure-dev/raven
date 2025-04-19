@@ -42,7 +42,7 @@ class RoundService:
             order_by=order_by,
             options=options
         )
-        if current_round is None:
+        if not current_round:
             raise ItemNotFoundException("Round", "status", "planned")
 
         return current_round[0]

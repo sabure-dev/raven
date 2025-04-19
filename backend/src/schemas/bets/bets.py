@@ -4,7 +4,6 @@ from pydantic import BaseModel
 
 
 class BetBase(BaseModel):
-    round_id: int
     amount: float
 
 
@@ -13,6 +12,7 @@ class BetCreate(BetBase):
 
 
 class BetOut(BetBase):
+    round_id: int
     id: int
     user_id: int
     is_winner: bool
