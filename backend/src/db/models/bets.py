@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, DateTime, func
+from sqlalchemy import ForeignKey, DateTime, func, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.session.base import Base
@@ -29,6 +29,10 @@ class Bet(Base):
         "Round",
         back_populates="bets",
         lazy="raise"
+    )
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'round_id', name='uq_user_round'),
     )
 
     def to_read_model(self) -> BetOut:
