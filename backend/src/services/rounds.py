@@ -20,7 +20,7 @@ class RoundService:
 
     async def create_round(self, round_to_create: RoundCreate) -> Round:
         round_dict = round_to_create.model_dump()
-        existing_round = await self._round_repo.find_one_by_field(status=RoundStatus.PLANNED)
+        existing_round = await self._round_repo.find_one_by_fields(filters=(Round.status == RoundStatus.PLANNED))
         if existing_round:
             raise ItemAlreadyExistsException("Round", {"status": RoundStatus.PLANNED})
         try:

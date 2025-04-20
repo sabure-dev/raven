@@ -35,11 +35,14 @@ class Bet(Base):
         UniqueConstraint('user_id', 'round_id', name='uq_user_round'),
     )
 
-    def to_read_model(self) -> BetOut:
+    def to_read_model(self, include_round: bool = False) -> BetOut:
         return BetOut(
             id=self.id,
             user_id=self.user_id,
             round_id=self.round_id,
+            round=self.round.to_read_model(include_model=True)
+            if include_round and self.round is not None
+            else None,
             amount=self.amount,
             created_at=self.created_at,
             is_winner=self.is_winner,

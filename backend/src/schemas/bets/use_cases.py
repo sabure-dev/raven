@@ -12,3 +12,8 @@ class BaseModelWithConfig(BaseModel):
 class CreateBetInput(BaseModelWithConfig):
     bet: BetCreate
     user_id: int
+
+
+class IncreaseBetAmountInput(BaseModelWithConfig):
+    delta: float
+    user_id: int

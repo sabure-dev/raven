@@ -44,7 +44,7 @@ class UserService:
             raise
 
     async def get_user_by_email(self, email: EmailStr) -> User:
-        user = await self._user_repo.find_one_by_field(email=email)
+        user = await self._user_repo.find_one_by_fields(filters=(User.email == email))
         if not user:
             raise ItemNotFoundException("User", "email", email)
         return user
@@ -56,7 +56,7 @@ class UserService:
         return user
 
     async def get_user_by_username(self, username: str) -> User:
-        user = await self._user_repo.find_one_by_field(username=username)
+        user = await self._user_repo.find_one_by_fields(filters=(username == username))
         if not user:
             raise ItemNotFoundException("User", "username", username)
         return user
@@ -78,7 +78,7 @@ class UserService:
             options.append(selectinload(User.orders))
         if load_bets:
             options.append(selectinload(User.bets))
-        user = await self._user_repo.find_one_by_field(id=user_id, options=options)
+        user = await self._user_repo.find_one_by_fields(filters=(User.id == user_id), options=options)
         if not user:
             raise ItemNotFoundException("User", "id", str(user_id))
         return user

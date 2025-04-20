@@ -36,7 +36,11 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def find_one_by_field(self, options: list | None = None, **filters: Any) -> Optional[ModelType]:
+    async def find_one_by_fields(
+            self,
+            options: list | None = None,
+            joins: list | None = None,
+            **filters: Any) -> Optional[ModelType]:
         raise NotImplementedError
 
     @abstractmethod
@@ -121,8 +125,19 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         result = await self._session.execute(stmt)
         return result.rowcount > 0
 
-    async def find_one_by_field(self, options: list | None = None, **filters: Any) -> Optional[ModelType]:
-        query = select(self._model).filter_by(**filters)
+    async def find_one_by_fields(self,
+                                 options: list | None = None,
+                                 joins: list | None = None,
+                                 **filters: Any) -> Optional[ModelType]:
+        query = select(self._model)
+
+        if joins:
+            for table in joins:
+                query = query.join(table)
+
+        if filters:
+            query = query.filter(*filters.values())
+
         if options:
             for option in options:
                 query = query.options(option)

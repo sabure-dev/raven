@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends
+from typing import Annotated
 
-from core.dependencies.bets.use_cases import get_create_bet_use_case
+from fastapi import APIRouter, Depends, Query
+
+from core.dependencies.bets.use_cases import get_create_bet_use_case, get_increase_bet_amount_use_case
 from core.dependencies.users.security import get_current_active_verified_user
 from db.models import User
 from schemas.bets.bets import BetOut, BetCreate
-from schemas.bets.use_cases import CreateBetInput
+from schemas.bets.use_cases import CreateBetInput, IncreaseBetAmountInput
 
 router = APIRouter(prefix="/bets",
                    tags=["Bets"])
@@ -20,3 +22,15 @@ async def create_bet(
         CreateBetInput(bet=bet_to_create, user_id=user.id)
     )
     return created_bet
+
+
+@router.patch("", response_model=BetOut)
+async def increase_bet_amount(
+        delta: Annotated[float, Query(gt=0)],
+        increase_bet_amount_use_case=Depends(get_increase_bet_amount_use_case),
+        user: User = Depends(get_current_active_verified_user),
+):
+    updated_bet = await increase_bet_amount_use_case.execute(
+        IncreaseBetAmountInput(delta=delta, user_id=user.id)
+    )
+    return updated_bet

@@ -3,7 +3,6 @@ from enum import Enum as PyEnum
 
 from pydantic import BaseModel, Field
 
-from schemas.bets.bets import BetOut
 from schemas.sneaker_model.sneaker_model import SneakerModelOut
 
 
@@ -26,8 +25,13 @@ class RoundOut(RoundBase):
     id: int
     status: RoundStatus
     model: SneakerModelOut | None = None
-    bets: list[BetOut] | None = None
+    bets: list["BetOut"] | None = None
     winner_id: int | None = None
     planned_time: datetime
     created_at: datetime
     closed_at: datetime | None = None
+
+
+from schemas.bets.bets import BetOut
+
+RoundOut.model_rebuild()
