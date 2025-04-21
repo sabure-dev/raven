@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from schemas.bets.bets import BetCreate
+from schemas.bets.bets import BetCreate, BetParams
 
 
 class BaseModelWithConfig(BaseModel):
@@ -16,4 +16,9 @@ class CreateBetInput(BaseModelWithConfig):
 
 class IncreaseBetAmountInput(BaseModelWithConfig):
     delta: float
+    user_id: int
+
+
+class GetUserBetsInput(BaseModelWithConfig):
+    params: BetParams
     user_id: int

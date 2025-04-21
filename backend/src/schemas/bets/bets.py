@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Literal
 
 from pydantic import BaseModel, Field
 
@@ -19,6 +19,14 @@ class BetOut(BetBase):
     user_id: int
     is_winner: bool
     created_at: datetime
+
+
+class BetParams(BaseModel):
+    is_winner: bool | None = None
+    is_actual: bool | None = None
+    offset: int | None = None
+    limit: int | None = None
+    sort_by_date: Literal["asc", "desc"] | None = None
 
 
 from schemas.rounds.rounds import RoundOut

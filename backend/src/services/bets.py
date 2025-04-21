@@ -62,11 +62,11 @@ class BetService:
             raise
         return created_bet
 
-    # TODO: add is_actual
     async def get_user_bets(
             self,
             user_id: int,
-            is_winner: bool = False,
+            is_winner: bool | None = None,
+            is_actual: bool | None = None,
             offset: int | None = None,
             limit: int | None = None,
             sort_by_date: Literal["asc", "desc"] | None = None
@@ -74,12 +74,21 @@ class BetService:
         filters = [Bet.user_id == user_id]
         options = [joinedload(Bet.round)]
         order_by = ("created_at", sort_by_date) if sort_by_date else None
+        joins = None
 
-        if is_winner:
+        if is_winner is not None:
             filters.append(Bet.is_winner == is_winner)
+
+        if is_actual is not None:
+            if is_actual:
+                filters.append(Round.status == RoundStatus.PLANNED)
+            else:
+                filters.append(Round.status != RoundStatus.PLANNED)
+            joins = {"round": True}
 
         bets = await self._bet_repo.find_all_with_filters(
             filters=filters,
+            joins=joins,
             options=options,
             order_by=order_by,
             offset=offset,

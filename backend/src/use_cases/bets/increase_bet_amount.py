@@ -7,7 +7,6 @@ from services.users import UserService
 from use_cases.base import BaseUseCase
 
 
-# TODO: add decrease balance after increase
 class IncreaseBetAmountUseCase(BaseUseCase[IncreaseBetAmountInput, BetOut]):
     def __init__(
             self,
