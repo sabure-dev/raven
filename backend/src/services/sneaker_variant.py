@@ -33,7 +33,7 @@ class SneakerVariantService:
         sneaker_variant = await self._sneaker_variant_repo.find_one_by_fields(filters=(SneakerVariant.id == sneaker_variant_id))
         if not sneaker_variant:
             raise ItemNotFoundException("SneakerVariant", "id", str(sneaker_variant_id))
-        return sneaker_variant
+        return sneaker_variant[0]
 
     async def get_all_by_ids(self, ids: list) -> dict[int, SneakerVariant]:
         return await self._sneaker_variant_repo.find_all_by_field("id", ids,

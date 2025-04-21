@@ -38,9 +38,10 @@ class AbstractRepository(ABC):
     @abstractmethod
     async def find_one_by_fields(
             self,
+            fields_to_return: list | None = None,
             options: list | None = None,
             joins: list | None = None,
-            **filters: Any) -> Optional[ModelType]:
+            **filters: Any) -> Optional[tuple]:
         raise NotImplementedError
 
     @abstractmethod
@@ -126,10 +127,14 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         return result.rowcount > 0
 
     async def find_one_by_fields(self,
+                                 fields_to_return: list | None = None,
                                  options: list | None = None,
                                  joins: list | None = None,
-                                 **filters: Any) -> Optional[ModelType]:
-        query = select(self._model)
+                                 **filters: Any) -> Optional[tuple]:
+        if fields_to_return is None:
+            fields_to_return = [self._model]
+
+        query = select(*fields_to_return)
 
         if joins:
             for table in joins:
@@ -141,8 +146,9 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         if options:
             for option in options:
                 query = query.options(option)
+
         result = await self._session.execute(query)
-        return result.scalar_one_or_none()
+        return result.one_or_none()
 
     async def update_one(self, item_id: int, data: dict) -> ModelType:
         stmt = (

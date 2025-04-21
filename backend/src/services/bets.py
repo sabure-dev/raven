@@ -101,15 +101,19 @@ class BetService:
         return updated_bet
 
     async def increase_user_bet_amount(self, delta: float, user_id: int) -> Bet:
-        bet = await self._bet_repo.find_one_by_fields(
+        result = await self._bet_repo.find_one_by_fields(
+            fields_to_return=[Bet, Round.min_bet_amount],
             joins=[Round],
             filters=and_(
                 Bet.user_id == user_id,
                 Round.status == RoundStatus.PLANNED
                 ),
         )
-        if not bet:
+        if not result:
             raise ItemNotFoundException("Round", "status", "PLANNED")
+
+        bet, min_bet_amount = result
+        await self._validate_bet_amount(min_bet_amount, delta)
 
         updated_bet = await self.increase_bet_amount(delta, bet.id)
         return updated_bet

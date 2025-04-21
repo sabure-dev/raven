@@ -25,5 +25,8 @@ def get_increase_bet_amount_use_case(
         bet_service_factory: Callable[[], BetService] = Depends(
             get_bet_service_factory
         ),
+        user_service_factory: Callable[[], UserService] = Depends(
+            get_user_service_factory
+        ),
 ) -> IncreaseBetAmountUseCase:
-    return IncreaseBetAmountUseCase(bet_service_factory)
+    return IncreaseBetAmountUseCase(bet_service_factory, user_service_factory)

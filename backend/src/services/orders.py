@@ -80,7 +80,7 @@ class OrderService:
         order = await self._order_repo.find_one_by_fields(filters=(Order.id == order_id))
         if not order:
             raise ItemNotFoundException("Order", "id", str(order_id))
-        return order
+        return order[0]
 
     async def cancel_order(self, order_id: int, user_id: int) -> Order:
         order = await self.get_order_by_id(order_id)

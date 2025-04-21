@@ -47,7 +47,7 @@ class UserService:
         user = await self._user_repo.find_one_by_fields(filters=(User.email == email))
         if not user:
             raise ItemNotFoundException("User", "email", email)
-        return user
+        return user[0]
 
     async def get_verified_user_by_email(self, email: EmailStr) -> User:
         user = await self.get_user_by_email(email)
@@ -56,10 +56,10 @@ class UserService:
         return user
 
     async def get_user_by_username(self, username: str) -> User:
-        user = await self._user_repo.find_one_by_fields(filters=(username == username))
+        user = await self._user_repo.find_one_by_fields(filters=(User.username == username))
         if not user:
             raise ItemNotFoundException("User", "username", username)
-        return user
+        return user[0]
 
     async def update_user_verification(self, user: User, is_verified: bool) -> User:
         if is_verified and user.is_verified:
@@ -81,7 +81,7 @@ class UserService:
         user = await self._user_repo.find_one_by_fields(filters=(User.id == user_id), options=options)
         if not user:
             raise ItemNotFoundException("User", "id", str(user_id))
-        return user
+        return user[0]
 
     async def delete_user(self, user_id: int) -> None:
         success = await self._user_repo.delete_one(user_id)
