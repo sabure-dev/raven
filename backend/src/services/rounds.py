@@ -1,4 +1,4 @@
-from typing import Callable, Literal
+from typing import Callable
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
@@ -33,16 +33,25 @@ class RoundService:
 
     async def get_current_round(self) -> Round:
         filters = [Round.status == RoundStatus.PLANNED]
-        order_by: tuple[str, Literal["asc", "desc"]] = ("id", "desc")
         options = [selectinload(Round.bets)]
 
         current_round = await self._round_repo.find_all_with_filters(
             filters=filters,
             limit=1,
-            order_by=order_by,
             options=options
         )
         if not current_round:
             raise ItemNotFoundException("Round", "status", "planned")
 
         return current_round[0]
+
+    async def close_current_round(self) -> None:
+        round = await self.get_current_round()
+
+        update_data = {
+            "status": RoundStatus.FINISHED,
+        }
+        updated_round = await self._round_repo.update_one(round.id, update_data)
+        # TODO: add winner selection logic
+
+        return updated_round
