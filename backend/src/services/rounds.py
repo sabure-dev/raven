@@ -1,9 +1,10 @@
+from datetime import timezone, datetime
 from typing import Callable
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
-from core.exceptions import ItemAlreadyExistsException, ItemNotFoundException
+from core.exceptions import ItemAlreadyExistsException, ItemNotFoundException, InvalidFieldValueException
 from core.utils.repository import AbstractRepository
 from db.models.rounds import Round
 from schemas.rounds.rounds import RoundCreate, RoundStatus
@@ -19,6 +20,11 @@ class RoundService:
         raise ItemNotFoundException("SneakerModel", field, value)
 
     async def create_round(self, round_to_create: RoundCreate) -> Round:
+        current_time = datetime.now(timezone.utc)
+        # TODO
+        if (round_to_create.planned_time.astimezone(timezone.utc) - current_time).total_seconds() <= 10:  # 86400 secs = 1 day
+            raise InvalidFieldValueException("Round.planned_time", "planned time must be in the future")
+
         round_dict = round_to_create.model_dump()
         existing_round = await self._round_repo.find_one_by_fields(filters=(Round.status == RoundStatus.PLANNED))
         if existing_round:

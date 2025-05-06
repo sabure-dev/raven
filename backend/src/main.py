@@ -1,13 +1,17 @@
-import uvicorn
 import logging
+from contextlib import asynccontextmanager
 from logging import Filter
+from typing import List, Optional
+
+import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette import status
-from typing import List, Optional
+from taskiq_fastapi import init
 
 from api.v1.routers import all_routers
 from core.exceptions import BaseModelException
+from core.tasks.task_app import broker
 
 
 class NoBaseModelExceptionFilter(Filter):
@@ -19,6 +23,15 @@ class NoBaseModelExceptionFilter(Filter):
             return True
 
 
+@asynccontextmanager
+async def taskiq_lifespan(app: FastAPI):
+    if not broker.is_worker_process:
+        await broker.startup()
+    yield
+    if not broker.is_worker_process:
+        await broker.shutdown()
+
+
 def create_app(
         routers: Optional[List] = None,
         exception_handlers: Optional[dict] = None,
@@ -26,6 +39,8 @@ def create_app(
         dependencies: Optional[List] = None,
         **kwargs
 ) -> FastAPI:
+    kwargs.setdefault("lifespan", taskiq_lifespan)
+
     app_kwargs = {
         "title": "Raven sneakers shop",
         "version": "1.0.0",
@@ -77,6 +92,7 @@ def configure_logging():
 
 
 app = create_app()
+init(broker, app)
 
 if __name__ == "__main__":
     uvicorn.run(app=app)

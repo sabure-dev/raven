@@ -25,6 +25,13 @@ class DatabaseSettings(BaseSettings):
     DB_PORT: str
 
 
+class RabbitMQSettings(BaseSettings):
+    RABBITMQ_HOST: str
+    RABBITMQ_PORT: str
+    RABBITMQ_USER: str
+    RABBITMQ_PASS: str
+
+
 class EmailSettings(BaseSettings):
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 465
@@ -52,6 +59,7 @@ class Settings(BaseSettings):
     email_settings: EmailSettings = EmailSettings()
     auth_jwt: AuthJWTSettings = AuthJWTSettings()
     api_settings: APISettings = APISettings()
+    rabbitmq_settings: RabbitMQSettings = RabbitMQSettings()
 
 
 settings = Settings()

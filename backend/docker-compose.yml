@@ -14,7 +14,6 @@ services:
     networks:
       - raven_network
     volumes:
-      - ./src:/app/src
       - ./certs:/app/certs
 
   raven_db:
@@ -35,6 +34,18 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  raven_rabbitmq:
+    image: rabbitmq:4-management
+    container_name: raven_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+    networks:
+      - raven_network
 
 networks:
   raven_network:

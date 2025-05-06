@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum as PyEnum
 
 from pydantic import BaseModel, Field
@@ -17,7 +17,7 @@ class RoundBase(BaseModel):
 
 
 class RoundCreate(RoundBase):
-    planned_time: datetime | None = datetime.now() + timedelta(days=1)
+    planned_time: datetime | None = datetime.now(timezone.utc) + timedelta(days=1)
     model_id: int
 
 
