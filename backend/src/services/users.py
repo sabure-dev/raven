@@ -94,6 +94,8 @@ class UserService:
                 user_id,
                 {"email": new_email, "is_verified": False},
             )
+            if not updated_user:
+                raise ItemNotFoundException("User", "id", str(user_id))
         except IntegrityError as e:
             if "unique constraint" in str(e).lower():
                 await self._handle_unique_violation({"email": new_email})
@@ -107,6 +109,8 @@ class UserService:
                 user_id,
                 {"username": new_username},
             )
+            if not updated_user:
+                raise ItemNotFoundException("User", "id", str(user_id))
         except IntegrityError as e:
             if "unique constraint" in str(e).lower():
                 await self._handle_unique_violation({"username": new_username})
@@ -116,7 +120,10 @@ class UserService:
 
     async def update_user_password(self, user_id: int, new_password: str) -> User:
         hashed_password = get_password_hash(new_password)
-        return await self._user_repo.update_one(user_id, {"password": hashed_password})
+        updated_user = await self._user_repo.update_one(user_id, {"password": hashed_password})
+        if not updated_user:
+            raise ItemNotFoundException("User", "id", str(user_id))
+        return updated_user
 
     async def change_password(
             self, user_id: int, current_password: str, new_password: str

@@ -1,15 +1,10 @@
-from typing import Callable
-
-from core.dependencies.rounds.services import get_round_service_factory
+from core.dependencies.rounds.delayed_task_use_case import get_close_round_use_case
 from core.tasks.task_app import broker
 from taskiq import TaskiqDepends
 
-from services.rounds import RoundService
-
 
 @broker.task
-async def delay_close_round_task(round_service_factory: Callable[[], RoundService] = TaskiqDepends(
-    get_round_service_factory
+async def delay_close_round_task(close_round_use_case=TaskiqDepends(
+    get_close_round_use_case
 )):
-    round_service = round_service_factory()
-    await round_service.close_current_round()
+    await close_round_use_case.execute()

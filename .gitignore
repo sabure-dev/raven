@@ -172,3 +172,4 @@ cython_debug/
 
 # Certificates / secrets
 certs/
+/backend/.idea/

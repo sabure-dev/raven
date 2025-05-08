@@ -45,7 +45,7 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def update_one(self, item_id: int, data: dict) -> ModelType:
+    async def update_one(self, item_id: int, data: dict) -> ModelType | None:
         raise NotImplementedError
 
     @abstractmethod
@@ -150,7 +150,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         result = await self._session.execute(query)
         return result.one_or_none()
 
-    async def update_one(self, item_id: int, data: dict) -> ModelType:
+    async def update_one(self, item_id: int, data: dict) -> ModelType | None:
         stmt = (
             update(self._model)
             .where(self._model.id == item_id)
@@ -158,7 +158,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
             .returning(self._model)
         )
         result = await self._session.execute(stmt)
-        return result.scalar_one()
+        return result.scalar_one_or_none()
 
     async def increment_field(
             self,

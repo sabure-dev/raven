@@ -126,3 +126,9 @@ class BetService:
 
         updated_bet = await self.increase_bet_amount(delta, bet.id)
         return updated_bet
+
+    async def update_winner_bet(self, bet_id: int) -> Bet:
+        updated_bet = await self._bet_repo.update_one(bet_id, {"is_winner": True})
+        if not updated_bet:
+            raise ItemNotFoundException("Bet", "id", str(bet_id))
+        return updated_bet

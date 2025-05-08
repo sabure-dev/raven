@@ -115,6 +115,8 @@ class SneakerModelService:
             updated_sneaker_model = await self._sneaker_model_repo.update_one(
                 sneaker_model_id, update_values
             )
+            if not updated_sneaker_model:
+                raise ItemNotFoundException("SneakerModel", "id", str(sneaker_model_id))
         except IntegrityError as e:
             if "unique constraint" in str(e).lower():
                 await self._handle_unique_violation({"name": update_sneaker_model.name})

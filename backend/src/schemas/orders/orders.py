@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from schemas.sneaker_variant.sneaker_variant import SneakerVariantOut, SneakerVariantOutWithModel
+from schemas.sneaker_variant.sneaker_variant import SneakerVariantOutWithModel
 
 
 class OrderStatus(PyEnum):

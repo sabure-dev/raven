@@ -46,3 +46,23 @@ class EmailService:
 
         server.send_message(msg)
         server.quit()
+
+    async def send_prize_email(self, email: str):
+        server = smtplib.SMTP_SSL(
+            settings.email_settings.SMTP_HOST, settings.email_settings.SMTP_PORT
+        )
+        server.login(self.sender, self.password)
+
+        msg = MIMEMultipart()
+        msg["From"] = self.sender
+        msg["To"] = email
+        msg["Subject"] = "Вы выиграли в аукционе!"
+
+        body = f"""
+        Поздравляем! Вы выиграли в аукционе. 
+        В течение 3 дней вы можете выбрать размер и оформить заказ.        
+        """
+        msg.attach(MIMEText(body, "plain"))
+
+        server.send_message(msg)
+        server.quit()

@@ -16,7 +16,11 @@ class Round(Base):
     winner_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='SET NULL'), nullable=True, default=None)
     model_id: Mapped[int] = mapped_column(ForeignKey("sneaker_models.id", ondelete="CASCADE"), index=True)
     min_bet_amount: Mapped[int] = mapped_column(default=100)
+    is_prize_claimed: Mapped[bool] = mapped_column(default=False)
 
+    prize_expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow() + timedelta(days=3)
+    )
     planned_time: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now() + timedelta(days=1)
     )
