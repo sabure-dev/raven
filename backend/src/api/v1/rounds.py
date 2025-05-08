@@ -28,3 +28,5 @@ async def get_current_round(
 ):
     current_round = await get_current_round_use_case.execute()
     return current_round
+
+

@@ -2,13 +2,8 @@ from typing import Callable
 
 from fastapi import Depends
 
-from core.dependencies.bets.services import get_bet_service_factory
-from core.dependencies.email.services import get_email_service_factory
 from core.dependencies.rounds.services import get_round_service_factory
-from services.bets import BetService
-from services.email import EmailService
 from services.rounds import RoundService
-from use_cases.rounds.close_round import CloseRoundUseCase
 from use_cases.rounds.create_round import CreateRoundUseCase
 from use_cases.rounds.get_current_round import GetCurrentRoundUseCase
 
@@ -27,4 +22,3 @@ def get_get_current_round_use_case(
         ),
 ) -> GetCurrentRoundUseCase:
     return GetCurrentRoundUseCase(round_service_factory)
-
